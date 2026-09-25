@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlowLedger - Professional Mobile Financial Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035485',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            emerald: '#10b981',
+                            rose: '#f43f5e',
+                            amber: '#f59e0b',
+                            violet: '#8b5cf6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar & mobile optimizations */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .touch-callout-none { -webkit-touch-callout: none; -webkit-user-select: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans h-full flex flex-col antialiased selection:bg-primary-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center transition-colors">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-primary-500/20">
+                <i class="fa-solid me-0 fa-wallet text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight leading-none bg-gradient-to-r from-primary-600 to-indigo-600 bg-clip-text text-transparent">FlowLedger</h1>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Smart Double-Entry ERP</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Currency Switcher -->
+            <select id="currencySelect" onchange="app.changeCurrency(this.value)" class="bg-slate-100 dark:bg-slate-700 text-xs font-semibold px-2 py-1.5 rounded-lg border-0 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer">
+                <option value="₹">₹ INR</option>
+                <option value="$">$ USD</option>
+                <option value="€">€ EUR</option>
+                <option value="£">£ GBP</option>
+                <option value="AED">AED</option>
+            </select>
+
+            <!-- Quick Settings / Reset Dropdown Button -->
+            <button onclick="app.openSettingsModal()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition" title="Data & Reset Options">
+                <i class="fa-solid fa-sliders text-xs"></i>
+            </button>
+
+            <!-- Dark Theme Toggle -->
+            <button onclick="app.toggleTheme()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+                <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Scrollable Body Container -->
+    <main class="flex-1 overflow-y-auto px-4 py-4 pb-24 max-w-3xl mx-auto w-full space-y-5">
+
+        <!-- VIEW 1: DASHBOARD -->
+        <section id="view-dashboard" class="space-y-5">
+            <!-- Net Worth Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Net Worth</span>
+                        <h2 id="netWorthDisplay" class="text-3xl font-extrabold tracking-tight mt-1 text-white">₹0.00</h2>
+                    </div>
+                    <button onclick="app.openAlterBalanceModal()" class="px-2.5 py-1.5 bg-primary-500/20 hover:bg-primary-500/40 text-primary-200 border border-primary-500/30 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-pen-to-square"></i> Alter Balances
+                    </button>
+                </div>
+
+                <!-- Balance Summary Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-700/60">
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-medium">Cash & Bank</p>
+                        <p id="totalCashDisplay" class="text-sm font-bold text-slate-100">₹0</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-indigo-300 font-medium">Savings & Investments</p>
+                        <p id="totalSavingsDisplay" class="text-sm font-bold text-indigo-200">₹0</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-emerald-400 font-medium">Receivables (Asset)</p>
+                        <p id="totalReceivableDisplay" class="text-sm font-bold text-emerald-300">₹0</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-rose-400 font-medium">Payables (Liability)</p>
+                        <p id="totalPayableDisplay" class="text-sm font-bold text-rose-300">₹0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Account Balances Slider/Grid -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Primary Balances</h3>
+                    <div class="flex gap-2">
+                        <button onclick="app.openAlterBalanceModal()" class="text-xs text-primary-600 dark:text-primary-400 font-semibold hover:underline"><i class="fa-solid fa-pen-to-square mr-1"></i>Adjust</button>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <button onclick="app.switchTab('accounts')" class="text-xs text-primary-600 dark:text-primary-400 font-semibold hover:underline">View All &rarr;</button>
+                    </div>
+                </div>
+                <div id="accountCardsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <!-- Dynamic Account Cards Rendered Here -->
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Monthly Expense Breakdown</h3>
+                    <span class="text-xs text-slate-500">This Month</span>
+                </div>
+                <div class="h-48 relative flex justify-center items-center">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity List -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 dark:border-slate-700/60 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Recent Transactions</h3>
+                    <button onclick="app.switchTab('statement')" class="text-xs text-primary-600 dark:text-primary-400 font-semibold hover:underline">Full Statement</button>
+                </div>
+                <div id="recentTransactionsList" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                    <!-- Dynamic Recent Transactions -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: ACCOUNTS & LEDGER CREATION -->
+        <section id="view-accounts" class="space-y-5 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold">Chart of Accounts & Ledgers</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Manage accounts, groups, liabilities & receivables</p>
+                </div>
+                <div class="flex gap-1.5 flex-wrap justify-end">
+                    <button onclick="app.removeUnusedLedgers()" class="px-2.5 py-1.5 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-xl text-xs font-semibold hover:bg-amber-200 dark:hover:bg-amber-900/60 flex items-center gap-1 transition" title="Purge ledgers with 0 transactions">
+                        <i class="fa-solid fa-broom text-xs"></i> Clean Unused
+                    </button>
+                    <button onclick="app.openAlterBalanceModal()" class="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center gap-1">
+                        <i class="fa-solid fa-pen-to-square text-xs"></i> Alter
+                    </button>
+                    <button onclick="app.openLedgerModal()" class="px-3 py-1.5 bg-primary-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-primary-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus text-xs"></i> New Ledger
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group Filter Tabs -->
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button onclick="app.filterLedgerGroup('ALL')" class="ledger-tab-btn active px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-primary-600 text-white">All Groups</button>
+                <button onclick="app.filterLedgerGroup('Asset')" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Assets</button>
+                <button onclick="app.filterLedgerGroup('Liability')" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Liabilities</button>
+                <button onclick="app.filterLedgerGroup('Income')" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Income</button>
+                <button onclick="app.filterLedgerGroup('Expense')" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Expenses</button>
+            </div>
+
+            <!-- Ledgers Accordion / List -->
+            <div id="ledgersListContainer" class="space-y-3">
+                <!-- Dynamically populated ledgers -->
+            </div>
+        </section>
+
+        <!-- VIEW 3: BUDGET MONITORING -->
+        <section id="view-budgets" class="space-y-5 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold">Expense Budgets</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Set monthly limits for expense ledgers</p>
+                </div>
+                <button onclick="app.openBudgetModal()" class="px-3 py-1.5 bg-primary-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-primary-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-xs"></i> Set Budget
+                </button>
+            </div>
+
+            <div id="budgetsList" class="space-y-3">
+                <!-- Dynamically populated budget cards -->
+            </div>
+        </section>
+
+        <!-- VIEW 4: GENERAL LEDGER STATEMENT / REPORTS -->
+        <section id="view-statement" class="space-y-5 hidden">
+            <div>
+                <h2 class="text-lg font-bold">General Ledger Statement</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Detailed Debit/Credit history for specific accounts</p>
+            </div>
+
+            <!-- Ledger Selector & Filters -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Select Ledger Account</label>
+                    <select id="statementLedgerSelect" onchange="app.renderStatement()" class="w-full bg-slate-100 dark:bg-slate-700 border-0 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+                        <!-- Ledger options populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
+                        <input type="date" id="statementFromDate" onchange="app.renderStatement()" class="w-full bg-slate-100 dark:bg-slate-700 border-0 rounded-xl px-2.5 py-1.5 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
+                        <input type="date" id="statementToDate" onchange="app.renderStatement()" class="w-full bg-slate-100 dark:bg-slate-700 border-0 rounded-xl px-2.5 py-1.5 text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statement Output Header Summary -->
+            <div id="statementSummaryBox" class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-slate-500">Opening Balance:</span>
+                    <span id="stmtOpeningBal" class="font-bold ml-1">₹0.00</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">Closing Balance:</span>
+                    <span id="stmtClosingBal" class="font-bold text-primary-600 dark:text-primary-400 ml-1">₹0.00</span>
+                </div>
+            </div>
+
+            <!-- Statement Table/List -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Particulars / Opposite Ledger</th>
+                                <th class="p-3 text-right">Debit (Dr)</th>
+                                <th class="p-3 text-right">Credit (Cr)</th>
+                                <th class="p-3 text-right">Balance</th>
+                                <th class="p-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statementTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                            <!-- Dynamic Statement Entries -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Mobile Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-700 z-30 px-3 py-2 pb-safe shadow-lg">
+        <div class="max-w-md mx-auto flex justify-between items-center relative">
+            
+            <!-- Dashboard Tab -->
+            <button onclick="app.switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex-1 flex flex-col items-center py-1 text-primary-600 dark:text-primary-400 transition">
+                <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">Home</span>
+            </button>
+
+            <!-- Accounts/Ledger Tab -->
+            <button onclick="app.switchTab('accounts')" id="nav-accounts" class="nav-btn flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                <i class="fa-solid fa-sitemap text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">Ledgers</span>
+            </button>
+
+            <!-- Center Floating Add Action -->
+            <div class="flex-1 flex justify-center -mt-6">
+                <button onclick="app.openTransactionModal()" class="w-12 h-12 bg-gradient-to-tr from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/30 transform active:scale-95 transition">
+                    <i class="fa-solid fa-plus text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Budgets Tab -->
+            <button onclick="app.switchTab('budgets')" id="nav-budgets" class="nav-btn flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                <i class="fa-solid fa-bullseye text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">Budgets</span>
+            </button>
+
+            <!-- Statement/Reports Tab -->
+            <button onclick="app.switchTab('statement')" id="nav-statement" class="nav-btn flex-1 flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                <i class="fa-solid fa-file-invoice-dollar text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">Statement</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL 1: ADD TRANSACTION (Income, Expense, Transfer, Receivable, Payable) -->
+    <div id="transactionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 id="txModalTitle" class="font-bold text-base">New Entry</h3>
+                <button onclick="app.closeTransactionModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="transactionForm" onsubmit="app.handleSaveTransaction(event)" class="space-y-4">
+                <input type="hidden" id="editingTxId" value="">
+                <!-- Entry Flow Type Tabs -->
+                <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl text-xs font-semibold">
+                    <button type="button" id="flowTypeExpense" onclick="app.setFlowType('Expense')" class="flow-btn py-2 rounded-lg bg-white dark:bg-slate-800 text-rose-600 shadow-sm">Expense</button>
+                    <button type="button" id="flowTypeIncome" onclick="app.setFlowType('Income')" class="flow-btn py-2 rounded-lg text-slate-500">Income</button>
+                    <button type="button" id="flowTypeTransfer" onclick="app.setFlowType('Transfer')" class="flow-btn py-2 rounded-lg text-slate-500">Transfer</button>
+                </div>
+
+                <input type="hidden" id="txFlowType" value="Expense">
+
+                <!-- Amount -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Amount</label>
+                    <div class="relative">
+                        <span id="amountCurrencySymbol" class="absolute left-3 top-2.5 font-bold text-slate-400">₹</span>
+                        <input type="number" step="0.01" id="txAmount" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl pl-8 pr-3 py-2.5 font-bold text-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- From Ledger / Debit Ledger -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label id="lblFromLedger" class="block text-xs font-semibold text-slate-500 mb-1">Paid From (Source Ledger)</label>
+                        <select id="txFromLedger" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- To Ledger / Credit Ledger -->
+                    <div>
+                        <label id="lblToLedger" class="block text-xs font-semibold text-slate-500 mb-1">Paid To (Destination/Category)</label>
+                        <select id="txToLedger" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date & Reference Note -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Date</label>
+                        <input type="date" id="txDate" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Reference / Note</label>
+                        <input type="text" id="txNote" placeholder="e.g. Client Payment / Groceries" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm shadow-md transition">
+                    Post Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NEW LEDGER CREATION -->
+    <div id="ledgerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-base">Create Ledger Account</h3>
+                <button onclick="app.closeLedgerModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="ledgerForm" onsubmit="app.handleSaveLedger(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Ledger Name</label>
+                    <input type="text" id="ledgerName" required placeholder="e.g. HDFC Bank, Mutual Fund, Client John" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Ledger Group / Nature</label>
+                    <select id="ledgerGroup" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                        <option value="Cash/Bank">Cash & Bank (Liquid Asset)</option>
+                        <option value="Savings">Savings & Investments / Mutual Funds</option>
+                        <option value="Accounts Receivable">Accounts Receivable (Owed to You)</option>
+                        <option value="Accounts Payable">Accounts Payable (You Owe)</option>
+                        <option value="Expenses">Operating Expense</option>
+                        <option value="Income">Revenue / Income</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Initial Opening Balance</label>
+                    <input type="number" step="0.01" id="ledgerOpeningBal" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-xs shadow transition mt-2">
+                    Save Ledger
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: SET BUDGET -->
+    <div id="budgetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 id="budgetModalTitle" class="font-bold text-base">Set Category Budget</h3>
+                <button onclick="app.closeBudgetModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="budgetForm" onsubmit="app.handleSaveBudget(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Select Expense Ledger</label>
+                    <select id="budgetLedgerSelect" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Monthly Spending Limit</label>
+                    <input type="number" step="0.01" id="budgetLimit" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-xs shadow transition mt-2">
+                    Save Budget Limit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW MODAL 4: ALTER ACCOUNT BALANCES -->
+    <div id="alterBalanceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-xl max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <div>
+                    <h3 class="font-bold text-base">Alter / Adjust Balances</h3>
+                    <p class="text-[11px] text-slate-500">Directly set the current balance for any ledger</p>
+                </div>
+                <button onclick="app.closeAlterBalanceModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="alterBalanceForm" onsubmit="app.handleSaveAlterBalance(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Select Account / Ledger</label>
+                    <select id="alterLedgerSelect" onchange="app.loadCurrentLedgerBalance(this.value)" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl flex justify-between items-center text-xs">
+                    <span class="text-slate-500">Current Calculated Balance:</span>
+                    <span id="alterCurrentBalDisplay" class="font-bold text-slate-800 dark:text-slate-200">₹0.00</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Target New Balance</label>
+                    <input type="number" step="0.01" id="alterTargetBalance" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-base focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Reason / Note</label>
+                    <input type="text" id="alterNote" placeholder="e.g. Bank reconciliation, Manual correction" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-xs shadow transition mt-2">
+                    Update Balance Now
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW MODAL 5: SETTINGS & DATA PURGE OPTIONS -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-base">Data & Reset Management</h3>
+                <button onclick="app.closeSettingsModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Option 1: Purge Transactions & Preserve Balances -->
+                <div class="p-3 border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl space-y-2">
+                    <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs">
+                        <i class="fa-solid fa-broom"></i>
+                        Clear Transactions (Keep Balances)
+                    </div>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                        Deletes all transaction logs, but <strong>locks and preserves your current Cash, Bank, Savings, Mutual Funds & Asset balances</strong> as their new baseline positions.
+                    </p>
+                    <button onclick="app.clearTransactionsKeepBalances()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow transition">
+                        Delete Transactions & Lock Balances
+                    </button>
+                </div>
+
+                <!-- Option 2: Smart Reset -->
+                <div class="p-3 border border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl space-y-2">
+                    <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-bold text-xs">
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                        Reset All (Keep Cash, Bank, Savings & Investments)
+                    </div>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                        Clears all transaction history, budgets, and unused non-essential ledgers. <strong>Locks current Cash, Bank, Savings, and Investment balances</strong> at their exact current amounts as the new baseline position.
+                    </p>
+                    <button onclick="app.resetDataKeepBalances()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition">
+                        Reset App (Preserve Cash/Bank/Savings/Investments)
+                    </button>
+                </div>
+
+                <!-- Option 3: Full Factory Reset -->
+                <div class="p-3 border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 rounded-xl space-y-2">
+    <!-- NEW MODAL 6: CUSTOM CONFIRM / ALERT DIALOG -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-xl text-center">
+            <div id="confirmIconContainer" class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 id="confirmTitle" class="font-bold text-base text-slate-800 dark:text-slate-100">Confirm Action</h3>
+                <p id="confirmMessage" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1"></p>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button id="confirmCancelBtn" onclick="app.closeCustomConfirm(false)" class="flex-1 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl text-xs hover:bg-slate-200 dark:hover:bg-slate-600 transition">Cancel</button>
+                <button id="confirmActionBtn" onclick="app.closeCustomConfirm(true)" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs shadow transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * FlowLedger Core Engine
+         * Double Entry ERP Architecture with persistent LocalStorage state
+         */
+        class FlowLedgerApp {
+            constructor() {
+                this.currency = '₹';
+                this.currentTab = 'dashboard';
+                this.expenseChartInstance = null;
+                this.pendingConfirmCallback = null;
+                
+                // Initial Default Chart of Accounts / Ledgers
+                this.defaultLedgers = [
+                    { id: 'led_cash', name: 'Petty Cash', group: 'Cash/Bank', type: 'Asset', icon: 'fa-money-bill-wave', initialBalance: 0 },
+                    { id: 'led_bank_hdfc', name: 'HDFC Main Bank', group: 'Cash/Bank', type: 'Asset', icon: 'fa-building-columns', initialBalance: 0 },
+                    { id: 'led_savings', name: 'Savings Account', group: 'Savings', type: 'Asset', icon: 'fa-piggy-bank', initialBalance: 0 },
+                    { id: 'led_mutual_fund', name: 'Mutual Funds & Equity', group: 'Savings', type: 'Asset', icon: 'fa-chart-line', initialBalance: 0 },
+                    { id: 'led_rec_john', name: 'Client John - Rec', group: 'Accounts Receivable', type: 'Asset', icon: 'fa-hand-holding-dollar', initialBalance: 0 },
+                    { id: 'led_pay_vendor', name: 'Vendor ABC - Pay', group: 'Accounts Payable', type: 'Liability', icon: 'fa-file-invoice', initialBalance: 0 },
+                    { id: 'led_capital_adjust', name: 'Equity / Balance Adjustment', group: 'Equity', type: 'Equity', icon: 'fa-scale-balanced', initialBalance: 0 },
+                    { id: 'led_salary', name: 'Salary Revenue', group: 'Income', type: 'Income', icon: 'fa-sack-dollar', initialBalance: 0 },
+                    { id: 'led_groceries', name: 'Groceries', group: 'Expenses', type: 'Expense', icon: 'fa-cart-shopping', initialBalance: 0 },
+                    { id: 'led_rent', name: 'House Rent', group: 'Expenses', type: 'Expense', icon: 'fa-house', initialBalance: 0 },
+                    { id: 'led_dining', name: 'Dining & Food', group: 'Expenses', type: 'Expense', icon: 'fa-utensils', initialBalance: 0 }
+                ];
+
+                // Initial Seed Transactions
+                this.defaultTransactions = [
+                    {
+                        id: 'tx_1',
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: 'led_salary',
+                        toLedgerId: 'led_bank_hdfc',
+                        amount: 75000,
+                        note: 'Monthly Salary Credit',
+                        flowType: 'Income'
+                    },
+                    {
+                        id: 'tx_2',
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: 'led_bank_hdfc',
+                        toLedgerId: 'led_cash',
+                        amount: 5000,
+                        note: 'Atm Cash Withdrawal',
+                        flowType: 'Transfer'
+                    },
+                    {
+                        id: 'tx_3',
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: 'led_bank_hdfc',
+                        toLedgerId: 'led_mutual_fund',
+                        amount: 15000,
+                        note: 'SIP Mutual Fund Investment',
+                        flowType: 'Transfer'
+                    },
+                    {
+                        id: 'tx_4',
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: 'led_bank_hdfc',
+                        toLedgerId: 'led_rent',
+                        amount: 18000,
+                        note: 'Rent Payment',
+                        flowType: 'Expense'
+                    },
+                    {
+                        id: 'tx_5',
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: 'led_cash',
+                        toLedgerId: 'led_groceries',
+                        amount: 2400,
+                        note: 'Supermarket Groceries',
+                        flowType: 'Expense'
+                    }
+                ];
+
+                // Default Budgets
+                this.defaultBudgets = [
+                    { ledgerId: 'led_groceries', limit: 10000 },
+                    { ledgerId: 'led_rent', limit: 20000 },
+                    { ledgerId: 'led_dining', limit: 8000 }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                // Load from localStorage or set defaults
+                this.ledgers = JSON.parse(localStorage.getItem('fl_ledgers')) || this.defaultLedgers;
+                this.transactions = JSON.parse(localStorage.getItem('fl_transactions')) || this.defaultTransactions;
+                this.budgets = JSON.parse(localStorage.getItem('fl_budgets')) || this.defaultBudgets;
+                this.currency = localStorage.getItem('fl_currency') || '₹';
+
+                document.getElementById('currencySelect').value = this.currency;
+                document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+
+                // Dark mode preference
+                if (localStorage.getItem('fl_theme') === 'dark' || (!('fl_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('themeIcon').className = 'fa-solid fa-sun text-amber-400 text-sm';
+                }
+
+                this.renderAll();
+            }
+
+            saveState() {
+                localStorage.setItem('fl_ledgers', JSON.stringify(this.ledgers));
+                localStorage.setItem('fl_transactions', JSON.stringify(this.transactions));
+                localStorage.setItem('fl_budgets', JSON.stringify(this.budgets));
+                localStorage.setItem('fl_currency', this.currency);
+            }
+
+            /**
+             * Custom Modal Prompt Replacement for native confirm/alert
+             */
+            showConfirm(title, message, actionText = 'Confirm', actionBgClass = 'bg-rose-600 hover:bg-rose-700', iconClass = 'fa-triangle-exclamation', iconBgClass = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30', onConfirm) {
+                document.getElementById('confirmTitle').innerText = title;
+                document.getElementById('confirmMessage').innerText = message;
+                
+                const actionBtn = document.getElementById('confirmActionBtn');
+                actionBtn.innerText = actionText;
+                actionBtn.className = `flex-1 py-2 text-white font-semibold rounded-xl text-xs shadow transition ${actionBgClass}`;
+                
+                const iconContainer = document.getElementById('confirmIconContainer');
+                iconContainer.className = `w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl ${iconBgClass}`;
+                iconContainer.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+
+                this.pendingConfirmCallback = onConfirm;
+                document.getElementById('customConfirmModal').classList.remove('hidden');
+            }
+
+            closeCustomConfirm(isConfirmed) {
+                document.getElementById('customConfirmModal').classList.add('hidden');
+                if (isConfirmed && typeof this.pendingConfirmCallback === 'function') {
+                    this.pendingConfirmCallback();
+                }
+                this.pendingConfirmCallback = null;
+            }
+
+            renderAll() {
+                this.renderDashboard();
+                this.renderLedgersList();
+                this.renderBudgetsList();
+                this.populateLedgerDropdowns();
+            }
+
+            toggleTheme() {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('fl_theme', isDark ? 'dark' : 'light');
+                document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun text-amber-400 text-sm' : 'fa-solid fa-moon text-sm';
+                this.renderExpenseChart();
+            }
+
+            changeCurrency(symbol) {
+                this.currency = symbol;
+                this.saveState();
+                this.renderAll();
+            }
+
+            /**
+             * Compute current running balance for all ledgers
+             */
+            calculateBalances() {
+                const balances = {};
+                this.ledgers.forEach(l => balances[l.id] = (l.initialBalance || 0));
+
+                this.transactions.forEach(tx => {
+                    const amt = parseFloat(tx.amount) || 0;
+                    
+                    if (balances[tx.fromLedgerId] !== undefined) {
+                        const fromLedger = this.ledgers.find(l => l.id === tx.fromLedgerId);
+                        if (fromLedger) {
+                            if (fromLedger.type === 'Asset' || fromLedger.type === 'Expense') {
+                                balances[tx.fromLedgerId] -= amt;
+                            } else {
+                                balances[tx.fromLedgerId] += amt;
+                            }
+                        }
+                    }
+
+                    if (balances[tx.toLedgerId] !== undefined) {
+                        const toLedger = this.ledgers.find(l => l.id === tx.toLedgerId);
+                        if (toLedger) {
+                            if (toLedger.type === 'Asset' || toLedger.type === 'Expense') {
+                                balances[tx.toLedgerId] += amt;
+                            } else {
+                                balances[tx.toLedgerId] -= amt;
+                            }
+                        }
+                    }
+                });
+
+                return balances;
+            }
+
+            renderDashboard() {
+                const balances = this.calculateBalances();
+
+                let totalCash = 0;
+                let totalBank = 0;
+                let totalReceivable = 0;
+                let totalPayable = 0;
+                let totalSavings = 0;
+
+                this.ledgers.forEach(l => {
+                    const bal = balances[l.id] || 0;
+                    if (l.group === 'Cash/Bank') {
+                        if (l.id === 'led_cash') totalCash += bal;
+                        else totalBank += bal;
+                    }
+                    if (l.group === 'Savings') totalSavings += bal;
+                    if (l.group === 'Accounts Receivable') totalReceivable += bal;
+                    if (l.group === 'Accounts Payable') totalPayable += bal;
+                });
+
+                const netWorth = (totalCash + totalBank + totalSavings + totalReceivable) - totalPayable;
+
+                document.getElementById('netWorthDisplay').innerText = `${this.currency}${netWorth.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                document.getElementById('totalCashDisplay').innerText = `${this.currency}${(totalCash + totalBank).toLocaleString()}`;
+                document.getElementById('totalSavingsDisplay').innerText = `${this.currency}${totalSavings.toLocaleString()}`;
+                document.getElementById('totalReceivableDisplay').innerText = `${this.currency}${totalReceivable.toLocaleString()}`;
+                document.getElementById('totalPayableDisplay').innerText = `${this.currency}${totalPayable.toLocaleString()}`;
+
+                // Primary Balances Grid Render
+                const primaryLedgers = this.ledgers.filter(l => ['Cash/Bank', 'Savings', 'Accounts Receivable', 'Accounts Payable'].includes(l.group));
+                const cardsContainer = document.getElementById('accountCardsGrid');
+                cardsContainer.innerHTML = primaryLedgers.map(l => {
+                    const bal = balances[l.id] || 0;
+                    const isNeg = bal < 0;
+                    return `
+                        <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${l.group}</span>
+                                <button onclick="app.openAlterBalanceModal('${l.id}')" class="text-slate-400 hover:text-primary-600 transition" title="Alter Balance">
+                                    <i class="fa-solid ${l.icon || 'fa-wallet'} text-xs"></i>
+                                </button>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">${l.name}</h4>
+                                <p class="text-sm font-extrabold ${isNeg ? 'text-rose-500' : 'text-slate-800 dark:text-slate-100'}">${this.currency}${bal.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Recent Transactions List
+                const recentTx = [...this.transactions].slice(-5).reverse();
+                const recentContainer = document.getElementById('recentTransactionsList');
+                if (recentTx.length === 0) {
+                    recentContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">No transactions posted yet.</div>`;
+                } else {
+                    recentContainer.innerHTML = recentTx.map(tx => {
+                        const fromL = this.ledgers.find(l => l.id === tx.fromLedgerId)?.name || 'Unknown';
+                        const toL = this.ledgers.find(l => l.id === tx.toLedgerId)?.name || 'Unknown';
+                        const isExp = tx.flowType === 'Expense';
+                        const isInc = tx.flowType === 'Income';
+
+                        return `
+                            <div class="p-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl ${isExp ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30' : isInc ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 'bg-primary-100 text-primary-600 dark:bg-primary-900/30'} flex items-center justify-center text-xs">
+                                        <i class="fa-solid ${isExp ? 'fa-arrow-up-right' : isInc ? 'fa-arrow-down-left' : 'fa-right-left'}"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-xs text-slate-800 dark:text-slate-200">${toL} <span class="text-[10px] text-slate-400 font-normal">from ${fromL}</span></p>
+                                        <p class="text-[10px] text-slate-400">${tx.date} • ${tx.note || tx.flowType}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-right">
+                                        <span class="font-bold text-xs ${isExp ? 'text-rose-500' : isInc ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-300'}">
+                                            ${isExp ? '-' : isInc ? '+' : ''}${this.currency}${parseFloat(tx.amount).toLocaleString('en-US', {minimumFractionDigits:2})}
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <button onclick="app.openTransactionModal('${tx.id}')" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-slate-600 text-slate-500 hover:text-primary-600 dark:text-slate-400 flex items-center justify-center transition" title="Edit Transaction">
+                                            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                                        </button>
+                                        <button onclick="app.deleteTransaction('${tx.id}')" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-500 hover:text-rose-600 dark:text-slate-400 flex items-center justify-center transition" title="Delete Transaction">
+                                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                this.renderExpenseChart();
+            }
+
+            /**
+             * Open Alter Balance Modal for a target ledger
+             */
+            openAlterBalanceModal(targetLedgerId = null) {
+                const select = document.getElementById('alterLedgerSelect');
+                select.innerHTML = this.ledgers.map(l => `<option value="${l.id}">${l.name} (${l.group})</option>`).join('');
+
+                if (targetLedgerId) {
+                    select.value = targetLedgerId;
+                }
+
+                this.loadCurrentLedgerBalance(select.value);
+                document.getElementById('alterBalanceModal').classList.remove('hidden');
+            }
+
+            closeAlterBalanceModal() {
+                document.getElementById('alterBalanceModal').classList.add('hidden');
+            }
+
+            loadCurrentLedgerBalance(ledgerId) {
+                const balances = this.calculateBalances();
+                const currentBal = balances[ledgerId] || 0;
+                document.getElementById('alterCurrentBalDisplay').innerText = `${this.currency}${currentBal.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                document.getElementById('alterTargetBalance').value = currentBal;
+            }
+
+            handleSaveAlterBalance(e) {
+                e.preventDefault();
+                const ledgerId = document.getElementById('alterLedgerSelect').value;
+                const targetBal = parseFloat(document.getElementById('alterTargetBalance').value);
+                const note = document.getElementById('alterNote').value || 'Manual Balance Alteration';
+
+                const balances = this.calculateBalances();
+                const currentBal = balances[ledgerId] || 0;
+                const diff = targetBal - currentBal;
+
+                if (diff === 0) {
+                    this.closeAlterBalanceModal();
+                    return;
+                }
+
+                const targetLedger = this.ledgers.find(l => l.id === ledgerId);
+                let equityLedger = this.ledgers.find(l => l.group === 'Equity');
+                if (!equityLedger) {
+                    equityLedger = { id: 'led_capital_adjust', name: 'Balance Adjustment Equity', group: 'Equity', type: 'Equity', icon: 'fa-scale-balanced', initialBalance: 0 };
+                    this.ledgers.push(equityLedger);
+                }
+
+                if (diff > 0) {
+                    // Increase balance
+                    this.transactions.push({
+                        id: 'tx_adj_' + Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: equityLedger.id,
+                        toLedgerId: targetLedger.id,
+                        amount: Math.abs(diff),
+                        note: note,
+                        flowType: 'Transfer'
+                    });
+                } else {
+                    // Decrease balance
+                    this.transactions.push({
+                        id: 'tx_adj_' + Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        fromLedgerId: targetLedger.id,
+                        toLedgerId: equityLedger.id,
+                        amount: Math.abs(diff),
+                        note: note,
+                        flowType: 'Transfer'
+                    });
+                }
+
+                this.saveState();
+                this.renderAll();
+                this.closeAlterBalanceModal();
+                document.getElementById('alterBalanceForm').reset();
+            }
+
+            openSettingsModal() {
+                document.getElementById('settingsModal').classList.remove('hidden');
+            }
+
+            closeSettingsModal() {
+                document.getElementById('settingsModal').classList.add('hidden');
+            }
+
+            /**
+             * Feature: Delete all transactions while LOCKING cash, bank, savings & investment balances at their current positions
+             */
+            clearTransactionsKeepBalances() {
+                this.showConfirm(
+                    "Clear All Transactions?",
+                    "Your current Cash, Bank, Savings, Mutual Funds, and Asset balances will be locked and saved as their new initial opening balances.",
+                    "Delete History",
+                    "bg-amber-600 hover:bg-amber-700",
+                    "fa-broom",
+                    "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
+                    () => {
+                        const currentBalances = this.calculateBalances();
+
+                        // Convert running balances into initial static opening balances on ledgers
+                        this.ledgers.forEach(l => {
+                            l.initialBalance = currentBalances[l.id] || 0;
+                        });
+
+                        // Clear all transaction entries
+                        this.transactions = [];
+
+                        this.saveState();
+                        this.renderAll();
+                        this.closeSettingsModal();
+                    }
+                );
+            }
+
+            /**
+             * Feature: Smart Reset (resets app features, clears history and unused ledgers, but keeps Cash/Bank/Savings/Investment account balances)
+             */
+            resetDataKeepBalances() {
+                this.showConfirm(
+                    "Reset App (Preserve Balances)?",
+                    "This will clear transaction logs, budgets, and non-essential ledgers, but will LOCK all Cash, Bank, Savings, and Mutual Fund/Investment balances at their current exact positions.",
+                    "Reset Keep Balances",
+                    "bg-indigo-600 hover:bg-indigo-700",
+                    "fa-rotate",
+                    "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30",
+                    () => {
+                        const currentBalances = this.calculateBalances();
+
+                        // Preserve balances for primary account groups: Cash/Bank and Savings/Investments
+                        this.ledgers.forEach(l => {
+                            if (['Cash/Bank', 'Savings'].includes(l.group)) {
+                                l.initialBalance = currentBalances[l.id] || 0;
+                            } else {
+                                l.initialBalance = 0;
+                            }
+                        });
+
+                        // Clear transaction logs and budgets
+                        this.transactions = [];
+                        this.budgets = [];
+
+                        // Remove unused custom ledgers outside Cash/Bank/Savings
+                        this.removeUnusedLedgers(true);
+
+                        this.saveState();
+                        this.renderAll();
+                        this.closeSettingsModal();
+                    }
+                );
+            }
+
+            /**
+             * Feature: Remove Unused Ledgers (Ledgers with zero transaction history)
+             */
+            removeUnusedLedgers(silent = false) {
+                const isLedgerInUse = (ledgerId) => {
+                    return this.transactions.some(tx => tx.fromLedgerId === ledgerId || tx.toLedgerId === ledgerId);
+                };
+
+                const unusedLedgers = this.ledgers.filter(l => 
+                    !['Cash/Bank', 'Savings', 'Equity'].includes(l.group) && !isLedgerInUse(l.id)
+                );
+
+                if (unusedLedgers.length === 0) {
+                    if (!silent) {
+                        this.showConfirm(
+                            "No Unused Ledgers Found",
+                            "All current expense, income, receivable, and payable ledgers have transaction entries linked to them.",
+                            "OK",
+                            "bg-primary-600 hover:bg-primary-700",
+                            "fa-circle-info",
+                            "bg-primary-100 text-primary-600 dark:bg-primary-900/30",
+                            null
+                        );
+                    }
+                    return;
+                }
+
+                const unusedNames = unusedLedgers.map(l => l.name).join(', ');
+
+                const performCleanup = () => {
+                    const unusedIds = new Set(unusedLedgers.map(l => l.id));
+                    this.ledgers = this.ledgers.filter(l => !unusedIds.has(l.id));
+                    this.budgets = this.budgets.filter(b => !unusedIds.has(b.ledgerId));
+
+                    this.saveState();
+                    this.renderAll();
+                };
+
+                if (silent) {
+                    performCleanup();
+                } else {
+                    this.showConfirm(
+                        `Remove ${unusedLedgers.length} Unused Ledger(s)?`,
+                        `The following ledgers have 0 transactions and will be removed: ${unusedNames}`,
+                        "Remove Ledgers",
+                        "bg-amber-600 hover:bg-amber-700",
+                        "fa-broom",
+                        "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
+                        performCleanup
+                    );
+                }
+            }
+
+            /**
+             * Feature: Delete a Specific Ledger Account
+             */
+            deleteLedger(ledgerId) {
+                const ledger = this.ledgers.find(l => l.id === ledgerId);
+                if (!ledger) return;
+
+                const associatedTxCount = this.transactions.filter(tx => tx.fromLedgerId === ledgerId || tx.toLedgerId === ledgerId).length;
+
+                let confirmMsg = `Are you sure you want to delete ledger "${ledger.name}"?`;
+                if (associatedTxCount > 0) {
+                    confirmMsg = `Ledger "${ledger.name}" has ${associatedTxCount} transaction(s) linked to it. Deleting this ledger will also remove all associated transactions. Proceed?`;
+                }
+
+                this.showConfirm(
+                    `Delete Ledger "${ledger.name}"?`,
+                    confirmMsg,
+                    "Delete Ledger",
+                    "bg-rose-600 hover:bg-rose-700",
+                    "fa-trash-can",
+                    "bg-rose-100 text-rose-600 dark:bg-rose-900/30",
+                    () => {
+                        this.ledgers = this.ledgers.filter(l => l.id !== ledgerId);
+                        this.transactions = this.transactions.filter(tx => tx.fromLedgerId !== ledgerId && tx.toLedgerId !== ledgerId);
+                        this.budgets = this.budgets.filter(b => b.ledgerId !== ledgerId);
+
+                        this.saveState();
+                        this.renderAll();
+                    }
+                );
+            }
+
+            /**
+             * Feature: Factory Reset back to initial demo state
+             */
+            factoryReset() {
+                this.showConfirm(
+                    "Perform Factory Reset?",
+                    "WARNING: This will permanently erase all custom ledgers, transaction history, and reset balances back to default demo data.",
+                    "Factory Reset",
+                    "bg-rose-600 hover:bg-rose-700",
+                    "fa-trash-can",
+                    "bg-rose-100 text-rose-600 dark:bg-rose-900/30",
+                    () => {
+                        localStorage.removeItem('fl_ledgers');
+                        localStorage.removeItem('fl_transactions');
+                        localStorage.removeItem('fl_budgets');
+
+                        this.ledgers = this.defaultLedgers;
+                        this.transactions = this.defaultTransactions;
+                        this.budgets = this.defaultBudgets;
+
+                        this.saveState();
+                        this.renderAll();
+                        this.closeSettingsModal();
+                    }
+                );
+            }
+
+            renderExpenseChart() {
+                const ctx = document.getElementById('expenseChart').getContext('2d');
+                if (this.expenseChartInstance) {
+                    this.expenseChartInstance.destroy();
+                }
+
+                const expenseLedgers = this.ledgers.filter(l => l.type === 'Expense');
+                const balances = this.calculateBalances();
+
+                const labels = [];
+                const data = [];
+                const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#6366f1'];
+
+                expenseLedgers.forEach(l => {
+                    const amt = balances[l.id] || 0;
+                    if (amt > 0) {
+                        labels.push(l.name);
+                        data.push(amt);
+                    }
+                });
+
+                if (data.length === 0) {
+                    labels.push('No Expenses');
+                    data.push(1);
+                }
+
+                this.expenseChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 10,
+                                    font: { size: 10 },
+                                    color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569'
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            }
+
+            renderLedgersList(filterGroup = 'ALL') {
+                const balances = this.calculateBalances();
+                const container = document.getElementById('ledgersListContainer');
+
+                let filtered = this.ledgers;
+                if (filterGroup !== 'ALL') {
+                    filtered = this.ledgers.filter(l => l.type === filterGroup || l.group === filterGroup);
+                }
+
+                container.innerHTML = filtered.map(l => {
+                    const bal = balances[l.id] || 0;
+                    const txCount = this.transactions.filter(tx => tx.fromLedgerId === l.id || tx.toLedgerId === l.id).length;
+                    const isUnused = txCount === 0 && !['Cash/Bank', 'Savings'].includes(l.group);
+
+                    return `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                                    <i class="fa-solid ${l.icon || 'fa-folder-open'} text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">${l.name}</h4>
+                                        ${isUnused ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Unused</span>' : ''}
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-medium">${l.group} (${l.type})</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="app.openAlterBalanceModal('${l.id}')" class="px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-primary-50 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 hover:text-primary-600 text-[10px] font-semibold rounded-lg transition" title="Alter Balance">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="app.deleteLedger('${l.id}')" class="px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 text-[10px] font-semibold rounded-lg transition" title="Delete Ledger">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                                <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${this.currency}${bal.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            filterLedgerGroup(group) {
+                document.querySelectorAll('.ledger-tab-btn').forEach(btn => {
+                    btn.classList.remove('bg-primary-600', 'text-white');
+                    btn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-600', 'dark:text-slate-300');
+                });
+                event.target.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-600', 'dark:text-slate-300');
+                event.target.classList.add('bg-primary-600', 'text-white');
+
+                this.renderLedgersList(group);
+            }
+
+            renderBudgetsList() {
+                const balances = this.calculateBalances();
+                const container = document.getElementById('budgetsList');
+
+                if (this.budgets.length === 0) {
+                    container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-2xl">No budgets configured yet. Click "Set Budget" above.</div>`;
+                    return;
+                }
+
+                container.innerHTML = this.budgets.map(b => {
+                    const ledger = this.ledgers.find(l => l.id === b.ledgerId);
+                    if (!ledger) return '';
+
+                    const spent = balances[b.ledgerId] || 0;
+                    const percent = Math.min(Math.round((spent / b.limit) * 100), 100);
+
+                    let statusBg = 'bg-emerald-500';
+                    let badgeText = 'On Track';
+                    let badgeBg = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+
+                    if (spent >= b.limit) {
+                        statusBg = 'bg-rose-500';
+                        badgeText = 'Exceeded';
+                        badgeBg = 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
+                    } else if (spent >= b.limit * 0.8) {
+                        statusBg = 'bg-amber-500';
+                        badgeText = 'Warning (>80%)';
+                        badgeBg = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+                    }
+
+                    return `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${ledger.name}</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeBg}">${badgeText}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="app.openBudgetModal('${b.ledgerId}')" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-slate-600 text-slate-500 hover:text-primary-600 dark:text-slate-400 flex items-center justify-center transition" title="Edit Budget">
+                                        <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                                    </button>
+                                    <button onclick="app.deleteBudget('${b.ledgerId}')" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-500 hover:text-rose-600 dark:text-slate-400 flex items-center justify-center transition" title="Delete Budget">
+                                        <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-baseline text-xs">
+                                <span class="text-slate-500">Spent: <strong class="text-slate-800 dark:text-slate-200">${this.currency}${spent.toLocaleString()}</strong></span>
+                                <span class="text-slate-400">Limit: ${this.currency}${parseFloat(b.limit).toLocaleString()}</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full ${statusBg} transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderStatement() {
+                const ledgerId = document.getElementById('statementLedgerSelect').value;
+                if (!ledgerId) return;
+
+                const selectedLedger = this.ledgers.find(l => l.id === ledgerId);
+                if (!selectedLedger) return;
+
+                let runningBal = selectedLedger.initialBalance || 0;
+                let openingBal = selectedLedger.initialBalance || 0;
+
+                const tbody = document.getElementById('statementTableBody');
+                tbody.innerHTML = '';
+
+                const filteredTx = this.transactions.filter(tx => tx.fromLedgerId === ledgerId || tx.toLedgerId === ledgerId)
+                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (filteredTx.length === 0 && openingBal === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">No transactions recorded for this ledger.</td></tr>`;
+                    document.getElementById('stmtOpeningBal').innerText = `${this.currency}0.00`;
+                    document.getElementById('stmtClosingBal').innerText = `${this.currency}0.00`;
+                    return;
+                }
+
+                filteredTx.forEach(tx => {
+                    const isDebit = tx.toLedgerId === ledgerId;
+                    const amt = parseFloat(tx.amount);
+
+                    let dr = 0;
+                    let cr = 0;
+
+                    if (selectedLedger.type === 'Asset' || selectedLedger.type === 'Expense') {
+                        if (isDebit) { dr = amt; runningBal += amt; }
+                        else { cr = amt; runningBal -= amt; }
+                    } else {
+                        if (isDebit) { dr = amt; runningBal -= amt; }
+                        else { cr = amt; runningBal += amt; }
+                    }
+
+                    const oppLedgerId = isDebit ? tx.fromLedgerId : tx.toLedgerId;
+                    const oppLedgerName = this.ledgers.find(l => l.id === oppLedgerId)?.name || 'External Account';
+
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30';
+                    row.innerHTML = `
+                        <td class="p-3 text-slate-500">${tx.date}</td>
+                        <td class="p-3 font-medium text-slate-800 dark:text-slate-200">${oppLedgerName} <div class="text-[10px] text-slate-400">${tx.note || ''}</div></td>
+                        <td class="p-3 text-right ${dr > 0 ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${dr > 0 ? this.currency + dr.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+                        <td class="p-3 text-right ${cr > 0 ? 'text-rose-600 font-semibold' : 'text-slate-400'}">${cr > 0 ? this.currency + cr.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+                        <td class="p-3 text-right font-bold text-slate-800 dark:text-slate-100">${this.currency}${runningBal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="app.openTransactionModal('${tx.id}')" class="p-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-slate-600 text-slate-500 hover:text-primary-600 text-[11px] transition" title="Edit Transaction">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="app.deleteTransaction('${tx.id}')" class="p-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-500 hover:text-rose-600 text-[11px] transition" title="Delete Transaction">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('stmtOpeningBal').innerText = `${this.currency}${openingBal.toFixed(2)}`;
+                document.getElementById('stmtClosingBal').innerText = `${this.currency}${runningBal.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            }
+
+            populateLedgerDropdowns() {
+                const stmtSelect = document.getElementById('statementLedgerSelect');
+                const budgetSelect = document.getElementById('budgetLedgerSelect');
+
+                stmtSelect.innerHTML = this.ledgers.map(l => `<option value="${l.id}">${l.name} (${l.group})</option>`).join('');
+                budgetSelect.innerHTML = this.ledgers.filter(l => l.type === 'Expense').map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+                this.setFlowType('Expense');
+            }
+
+            setFlowType(type) {
+                document.getElementById('txFlowType').value = type;
+                document.querySelectorAll('.flow-btn').forEach(b => {
+                    b.classList.remove('bg-white', 'dark:bg-slate-800', 'text-rose-600', 'text-emerald-600', 'text-primary-600', 'shadow-sm');
+                    b.classList.add('text-slate-500');
+                });
+
+                const fromSelect = document.getElementById('txFromLedger');
+                const toSelect = document.getElementById('txToLedger');
+
+                const cashBankLedgers = this.ledgers.filter(l => ['Cash/Bank', 'Savings', 'Accounts Receivable', 'Accounts Payable'].includes(l.group));
+                const expenseLedgers = this.ledgers.filter(l => l.type === 'Expense');
+                const incomeLedgers = this.ledgers.filter(l => l.type === 'Income');
+
+                if (type === 'Expense') {
+                    document.getElementById('flowTypeExpense').classList.add('bg-white', 'dark:bg-slate-800', 'text-rose-600', 'shadow-sm');
+                    document.getElementById('lblFromLedger').innerText = 'Paid From Account';
+                    document.getElementById('lblToLedger').innerText = 'Expense Category Ledger';
+
+                    fromSelect.innerHTML = cashBankLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                    toSelect.innerHTML = expenseLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                } else if (type === 'Income') {
+                    document.getElementById('flowTypeIncome').classList.add('bg-white', 'dark:bg-slate-800', 'text-emerald-600', 'shadow-sm');
+                    document.getElementById('lblFromLedger').innerText = 'Income Revenue Source';
+                    document.getElementById('lblToLedger').innerText = 'Deposited To Account';
+
+                    fromSelect.innerHTML = incomeLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                    toSelect.innerHTML = cashBankLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                } else { // Transfer
+                    document.getElementById('flowTypeTransfer').classList.add('bg-white', 'dark:bg-slate-800', 'text-primary-600', 'shadow-sm');
+                    document.getElementById('lblFromLedger').innerText = 'Source Account (Transfer From)';
+                    document.getElementById('lblToLedger').innerText = 'Destination Account (Transfer To)';
+
+                    fromSelect.innerHTML = this.ledgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                    toSelect.innerHTML = this.ledgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                }
+            }
+
+            switchTab(tab) {
+                this.currentTab = tab;
+                document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(`view-${tab}`).classList.remove('hidden');
+
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('text-primary-600', 'dark:text-primary-400');
+                    btn.classList.add('text-slate-400');
+                });
+                document.getElementById(`nav-${tab}`).classList.remove('text-slate-400');
+                document.getElementById(`nav-${tab}`).classList.add('text-primary-600', 'dark:text-primary-400');
+
+                if (tab === 'statement') this.renderStatement();
+            }
+
+            openTransactionModal(txId = null) {
+                document.getElementById('amountCurrencySymbol').innerText = this.currency;
+                const editingInput = document.getElementById('editingTxId');
+                const modalTitle = document.getElementById('txModalTitle');
+
+                if (txId) {
+                    const tx = this.transactions.find(t => t.id === txId);
+                    if (tx) {
+                        editingInput.value = tx.id;
+                        modalTitle.innerText = "Edit Transaction";
+                        this.setFlowType(tx.flowType || 'Expense');
+                        document.getElementById('txAmount').value = tx.amount;
+                        document.getElementById('txFromLedger').value = tx.fromLedgerId;
+                        document.getElementById('txToLedger').value = tx.toLedgerId;
+                        document.getElementById('txDate').value = tx.date;
+                        document.getElementById('txNote').value = tx.note || '';
+                        document.getElementById('transactionModal').classList.remove('hidden');
+                        return;
+                    }
+                }
+
+                editingInput.value = '';
+                modalTitle.innerText = "New Entry";
+                document.getElementById('transactionForm').reset();
+                document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+                this.setFlowType('Expense');
+                document.getElementById('transactionModal').classList.remove('hidden');
+            }
+
+            closeTransactionModal() {
+                document.getElementById('transactionModal').classList.add('hidden');
+                document.getElementById('editingTxId').value = '';
+            }
+
+            deleteTransaction(txId) {
+                const tx = this.transactions.find(t => t.id === txId);
+                if (!tx) return;
+
+                this.showConfirm(
+                    "Delete Transaction?",
+                    `Are you sure you want to delete this ${this.currency}${parseFloat(tx.amount).toLocaleString()} transaction entry? This will reverse its effect on account balances.`,
+                    "Delete Transaction",
+                    "bg-rose-600 hover:bg-rose-700",
+                    "fa-trash-can",
+                    "bg-rose-100 text-rose-600 dark:bg-rose-900/30",
+                    () => {
+                        this.transactions = this.transactions.filter(t => t.id !== txId);
+                        this.saveState();
+                        this.renderAll();
+                    }
+                );
+            }
+
+            openLedgerModal() {
+                document.getElementById('ledgerModal').classList.remove('hidden');
+            }
+
+            closeLedgerModal() {
+                document.getElementById('ledgerModal').classList.add('hidden');
+            }
+
+            openBudgetModal(ledgerId = null) {
+                const select = document.getElementById('budgetLedgerSelect');
+                const limitInput = document.getElementById('budgetLimit');
+                const title = document.getElementById('budgetModalTitle');
+
+                if (ledgerId) {
+                    const budget = this.budgets.find(b => b.ledgerId === ledgerId);
+                    if (budget) {
+                        select.value = ledgerId;
+                        limitInput.value = budget.limit;
+                        if (title) title.innerText = 'Alter Budget Limit';
+                    }
+                } else {
+                    document.getElementById('budgetForm').reset();
+                    if (title) title.innerText = 'Set Category Budget';
+                }
+                document.getElementById('budgetModal').classList.remove('hidden');
+            }
+
+            closeBudgetModal() {
+                document.getElementById('budgetModal').classList.add('hidden');
+            }
+
+            deleteBudget(ledgerId) {
+                const ledger = this.ledgers.find(l => l.id === ledgerId);
+                const ledgerName = ledger ? ledger.name : 'this category';
+
+                this.showConfirm(
+                    "Delete Budget?",
+                    `Are you sure you want to remove the monthly spending limit for "${ledgerName}"?`,
+                    "Delete Budget",
+                    "bg-rose-600 hover:bg-rose-700",
+                    "fa-trash-can",
+                    "bg-rose-100 text-rose-600 dark:bg-rose-900/30",
+                    () => {
+                        this.budgets = this.budgets.filter(b => b.ledgerId !== ledgerId);
+                        this.saveState();
+                        this.renderBudgetsList();
+                    }
+                );
+            }
+
+            handleSaveTransaction(e) {
+                e.preventDefault();
+                const editingId = document.getElementById('editingTxId').value;
+                const flowType = document.getElementById('txFlowType').value;
+                const amount = parseFloat(document.getElementById('txAmount').value);
+                const fromLedgerId = document.getElementById('txFromLedger').value;
+                const toLedgerId = document.getElementById('txToLedger').value;
+                const date = document.getElementById('txDate').value;
+                const note = document.getElementById('txNote').value;
+
+                if (fromLedgerId === toLedgerId) {
+                    this.showConfirm("Invalid Selection", "Source and Destination ledgers cannot be identical.", "OK", "bg-primary-600 hover:bg-primary-700", "fa-circle-exclamation", "bg-amber-100 text-amber-600 dark:bg-amber-900/30", null);
+                    return;
+                }
+
+                if (editingId) {
+                    const txIdx = this.transactions.findIndex(t => t.id === editingId);
+                    if (txIdx >= 0) {
+                        this.transactions[txIdx] = {
+                            ...this.transactions[txIdx],
+                            date,
+                            fromLedgerId,
+                            toLedgerId,
+                            amount,
+                            note,
+                            flowType
+                        };
+                    }
+                } else {
+                    const newTx = {
+                        id: 'tx_' + Date.now(),
+                        date,
+                        fromLedgerId,
+                        toLedgerId,
+                        amount,
+                        note,
+                        flowType
+                    };
+                    this.transactions.push(newTx);
+                }
+
+                this.saveState();
+                this.renderAll();
+                this.closeTransactionModal();
+                document.getElementById('transactionForm').reset();
+            }
+
+            handleSaveLedger(e) {
+                e.preventDefault();
+                const name = document.getElementById('ledgerName').value;
+                const group = document.getElementById('ledgerGroup').value;
+                const openingBal = parseFloat(document.getElementById('ledgerOpeningBal').value) || 0;
+
+                let type = 'Asset';
+                if (group === 'Accounts Payable') type = 'Liability';
+                if (group === 'Expenses') type = 'Expense';
+                if (group === 'Income') type = 'Income';
+
+                let icon = 'fa-wallet';
+                if (group === 'Savings') icon = 'fa-chart-line';
+
+                const newLedger = {
+                    id: 'led_' + Date.now(),
+                    name,
+                    group,
+                    type,
+                    icon,
+                    initialBalance: openingBal
+                };
+
+                this.ledgers.push(newLedger);
+
+                this.saveState();
+                this.renderAll();
+                this.closeLedgerModal();
+                document.getElementById('ledgerForm').reset();
+            }
+
+            handleSaveBudget(e) {
+                e.preventDefault();
+                const ledgerId = document.getElementById('budgetLedgerSelect').value;
+                const limit = parseFloat(document.getElementById('budgetLimit').value);
+
+                const existingIdx = this.budgets.findIndex(b => b.ledgerId === ledgerId);
+                if (existingIdx >= 0) {
+                    this.budgets[existingIdx].limit = limit;
+                } else {
+                    this.budgets.push({ ledgerId, limit });
+                }
+
+                this.saveState();
+                this.renderBudgetsList();
+                this.closeBudgetModal();
+                document.getElementById('budgetForm').reset();
+            }
+        }
+
+        // Initialize application on DOM ready
+        let app;
+        const initApp = () => {
+            app = new FlowLedgerApp();
+            window.app = app;
+        };
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
