@@ -83,20 +83,52 @@
                 </div>
             </div>
 
-            <!-- Main Categories Ledgers Overview -->
+            <!-- Dashboard Ledgers Render Area (Pashapashi Duto Kore Box) -->
             <div>
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Accounts & Ledgers</h2>
-                    <span class="text-[11px] text-emerald-400 font-medium"><i class="fa-solid fa-hand-pointer mr-1"></i>Tap to view ledger history</span>
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Accounts & Individual Ledgers</h2>
+                    <span class="text-[11px] text-emerald-400 font-medium"><i class="fa-solid fa-hand-pointer mr-1"></i>Tap to view</span>
                 </div>
 
-                <div class="space-y-3" id="categories-container">
-                    <!-- Dynamic Accounts & Ledgers render here -->
+                <div class="grid grid-cols-2 gap-2.5" id="categories-container">
+                    <!-- Dynamic Ledgers render here -->
+                </div>
+            </div>
+
+            <!-- Expense Breakdown Section with Round Chart and Single Category Boxes -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expense Breakdown</h2>
+                    <span id="chart-total-expense" class="text-xs font-bold text-rose-400">₹ 0.00</span>
+                </div>
+                
+                <!-- Donut Chart & Legend -->
+                <div class="flex flex-col sm:flex-row items-center justify-around gap-4 py-1">
+                    <div class="relative w-36 h-36 flex items-center justify-center">
+                        <svg id="expense-donut-chart" class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <!-- Dynamic Donut Segments rendered here -->
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                            <span class="text-[10px] text-slate-400 font-medium">Expenses</span>
+                            <span id="donut-center-text" class="text-xs font-bold text-white">₹0</span>
+                        </div>
+                    </div>
+                    <div id="expense-chart-legend" class="flex-1 w-full space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        <!-- Dynamic Legends Render here -->
+                    </div>
+                </div>
+
+                <!-- Single Different Boxes for Each Expense Category -->
+                <div class="pt-2 border-t border-slate-800 space-y-2">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Category Wise Expenses</h3>
+                    <div id="single-expense-boxes" class="grid grid-cols-1 gap-2.5">
+                        <!-- Single boxes for each expense category rendered here -->
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- 2. CATEGORIES VIEW (Expenses, Income, Assets, Liabilities) -->
+        <!-- 2. CATEGORIES VIEW -->
         <section id="view-categories" class="hidden space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -310,6 +342,11 @@
                     <label class="block text-slate-300 font-medium mb-1">Initial Opening Balance (₹)</label>
                     <input type="number" step="any" id="new-ledger-balance" placeholder="0.00" value="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
                 </div>
+                <!-- Show on Dashboard Checkbox -->
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="new-ledger-show-dash" checked class="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-600 focus:ring-0">
+                    <label for="new-ledger-show-dash" class="text-slate-300 font-medium cursor-pointer">Show on Dashboard</label>
+                </div>
                 <div class="pt-2 flex gap-2">
                     <button type="button" onclick="closeModal('modal-add-ledger')" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-lg font-medium">Cancel</button>
                     <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500">Save Ledger</button>
@@ -446,12 +483,12 @@
                 { id: "cat-6", name: "Mutual Funds", pillar: "ASSET", icon: "fa-chart-line" }
             ],
             ledgers: [
-                { id: "leg-1", group: "Cash", customCatId: "cat-3", name: "Cash in Hand", balance: 5000 },
-                { id: "leg-2", group: "Bank", customCatId: "cat-3", name: "SBI Savings Bank", balance: 45000 },
-                { id: "leg-3", group: "Savings", customCatId: "cat-3", name: "HDFC Fixed Deposit", balance: 100000 },
-                { id: "leg-4", group: "Investment", customCatId: "cat-6", name: "Zerodha Demat", balance: 65000 },
-                { id: "leg-5", group: "Receivable", customCatId: "cat-3", name: "Ramesh (Borrower)", balance: 12000 },
-                { id: "leg-6", group: "Payable", customCatId: "cat-4", name: "ICICI Credit Card", balance: 18500 }
+                { id: "leg-1", group: "Cash", customCatId: "cat-3", name: "Cash in Hand", balance: 5000, showOnDashboard: true },
+                { id: "leg-2", group: "Bank", customCatId: "cat-3", name: "SBI Savings Bank", balance: 45000, showOnDashboard: true },
+                { id: "leg-3", group: "Savings", customCatId: "cat-3", name: "HDFC Fixed Deposit", balance: 100000, showOnDashboard: true },
+                { id: "leg-4", group: "Investment", customCatId: "cat-6", name: "Zerodha Demat", balance: 65000, showOnDashboard: true },
+                { id: "leg-5", group: "Receivable", customCatId: "cat-3", name: "Ramesh (Borrower)", balance: 12000, showOnDashboard: true },
+                { id: "leg-6", group: "Payable", customCatId: "cat-4", name: "ICICI Credit Card", balance: 18500, showOnDashboard: true }
             ],
             transactions: [
                 { id: "tx-1", type: "INCOME", amount: 75000, date: getRecentDate(2), sourceId: "leg-2", targetId: null, category: "Salary & Wages", note: "Monthly Salary Inflow" },
@@ -497,9 +534,10 @@
                     console.error("Storage error", e);
                 }
             }
-            document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('budget-date-from').value = getMonthStartDate();
-            document.getElementById('budget-date-to').value = getMonthEndDate();
+            
+            appData.ledgers.forEach(l => {
+                if (l.showOnDashboard === undefined) l.showOnDashboard = true;
+            });
 
             renderAll();
         }
@@ -554,70 +592,53 @@
                 Payable: { icon: 'fa-credit-card', color: 'text-rose-400', bg: 'bg-rose-500/10' }
             };
 
-            DEFAULT_GROUPS.forEach(grp => {
-                const groupLedgers = appData.ledgers.filter(l => l.group === grp);
-                let grpTotal = 0;
-
-                groupLedgers.forEach(l => {
-                    grpTotal += calculateLedgerCurrentBalance(l.id);
-                });
-
-                if (grp === 'Payable') {
-                    totalLiabilities += grpTotal;
+            appData.ledgers.forEach(l => {
+                const bal = calculateLedgerCurrentBalance(l.id);
+                if (l.group === 'Payable') {
+                    totalLiabilities += bal;
                 } else {
-                    totalAssets += grpTotal;
+                    totalAssets += bal;
                 }
+            });
 
-                const meta = groupMeta[grp] || { icon: 'fa-wallet', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+            const dashboardLedgers = appData.ledgers.filter(l => l.showOnDashboard !== false);
 
-                const grpCard = document.createElement('div');
-                grpCard.className = "bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-sm space-y-2.5";
+            dashboardLedgers.forEach(l => {
+                const bal = calculateLedgerCurrentBalance(l.id);
+                const meta = groupMeta[l.group] || { icon: 'fa-wallet', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
 
-                let ledgersHTML = '';
-                if (groupLedgers.length === 0) {
-                    ledgersHTML = `<p class="text-xs text-slate-500 italic py-1">No ledgers in ${grp}</p>`;
-                } else {
-                    groupLedgers.forEach(l => {
-                        const bal = calculateLedgerCurrentBalance(l.id);
-                        ledgersHTML += `
-                            <div class="flex justify-between items-center p-2 rounded-lg bg-slate-950/60 hover:bg-slate-800/80 transition-all border border-slate-800/60 group">
-                                <div onclick="openLedgerDetailModal('${l.id}')" class="flex items-center space-x-2 flex-1 cursor-pointer">
-                                    <div class="w-2 h-2 rounded-full ${grp === 'Payable' ? 'bg-rose-400' : 'bg-emerald-400'}"></div>
-                                    <span class="text-xs font-medium text-slate-200 group-hover:text-emerald-300 transition-colors">${l.name}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span onclick="openLedgerDetailModal('${l.id}')" class="text-xs font-semibold ${bal < 0 ? 'text-rose-400' : 'text-slate-100'} cursor-pointer">${formatCurr(bal)}</span>
-                                    <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                        <button onclick="editLedger('${l.id}')" class="w-6 h-6 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[10px]" title="Edit">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <button onclick="deleteLedger('${l.id}')" class="w-6 h-6 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px]" title="Delete">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-
-                grpCard.innerHTML = `
-                    <div class="flex justify-between items-center pb-1 border-b border-slate-800/60">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-7 h-7 rounded-lg ${meta.bg} ${meta.color} flex items-center justify-center text-xs">
+                const singleBox = document.createElement('div');
+                singleBox.className = "bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between transition-all hover:border-slate-700 space-y-2";
+                singleBox.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div onclick="openLedgerDetailModal('${l.id}')" class="flex items-center space-x-2 cursor-pointer truncate flex-1">
+                            <div class="w-7 h-7 rounded-lg ${meta.bg} ${meta.color} flex items-center justify-center text-[11px] flex-shrink-0 shadow-inner">
                                 <i class="fa-solid ${meta.icon}"></i>
                             </div>
-                            <span class="text-xs font-bold text-slate-200 uppercase tracking-wide">${grp}</span>
+                            <div class="truncate">
+                                <div class="text-[11px] font-bold text-slate-200 truncate">${l.name}</div>
+                                <div class="text-[9px] text-slate-400 uppercase tracking-wide">${l.group}</div>
+                            </div>
                         </div>
-                        <span class="text-xs font-bold ${grp === 'Payable' ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(grpTotal)}</span>
+                        <div class="flex items-center gap-1 opacity-70 hover:opacity-100 flex-shrink-0">
+                            <button onclick="editLedger('${l.id}')" class="w-5 h-5 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[9px]" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteLedger('${l.id}')" class="w-5 h-5 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[9px]" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="space-y-1.5 pt-1">
-                        ${ledgersHTML}
+                    <div onclick="openLedgerDetailModal('${l.id}')" class="text-right cursor-pointer pt-1 border-t border-slate-800/60">
+                        <span class="text-xs font-extrabold ${l.group === 'Payable' ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(bal)}</span>
                     </div>
                 `;
-
-                container.appendChild(grpCard);
+                container.appendChild(singleBox);
             });
+
+            if (dashboardLedgers.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center py-6 text-xs text-slate-500 italic">No ledgers set to show on Dashboard. Check Ledger Directory.</div>`;
+            }
 
             const netWorth = totalAssets - totalLiabilities;
             document.getElementById('total-balance').textContent = formatCurr(netWorth);
@@ -632,6 +653,95 @@
                 badge.className = "bg-rose-500/20 text-rose-300 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border border-rose-500/30";
                 badge.textContent = "Deficit";
             }
+
+            renderExpenseDonutChart();
+        }
+
+        function renderExpenseDonutChart() {
+            const svg = document.getElementById('expense-donut-chart');
+            const legendContainer = document.getElementById('expense-chart-legend');
+            const singleBoxesContainer = document.getElementById('single-expense-boxes');
+            const totalExpenseLabel = document.getElementById('chart-total-expense');
+            const centerText = document.getElementById('donut-center-text');
+
+            svg.innerHTML = '';
+            legendContainer.innerHTML = '';
+            singleBoxesContainer.innerHTML = '';
+
+            let expenseMap = {};
+            let totalExpense = 0;
+
+            appData.transactions.forEach(tx => {
+                if (tx.type === 'EXPENSE') {
+                    const amt = parseFloat(tx.amount) || 0;
+                    const cat = tx.category || 'General';
+                    expenseMap[cat] = (expenseMap[cat] || 0) + amt;
+                    totalExpense += amt;
+                }
+            });
+
+            totalExpenseLabel.textContent = formatCurr(totalExpense);
+            centerText.textContent = formatCurr(totalExpense).replace('.00','');
+
+            const keys = Object.keys(expenseMap);
+            if (keys.length === 0 || totalExpense === 0) {
+                svg.innerHTML = `<circle cx="18" cy="18" r="15.9155" fill="transparent" stroke="#1e293b" stroke-width="4"></circle>`;
+                legendContainer.innerHTML = `<p class="text-[11px] text-slate-500 italic text-center py-2">No expenses recorded yet.</p>`;
+                singleBoxesContainer.innerHTML = `<p class="text-[11px] text-slate-500 italic text-center py-2">No category expense items found.</p>`;
+                return;
+            }
+
+            const palette = ['#10b981', '#3b82f6', '#f43f5e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899'];
+            let cumulativePercent = 0;
+
+            keys.forEach((catName, index) => {
+                const amount = expenseMap[catName];
+                const percent = (amount / totalExpense) * 100;
+                const color = palette[index % palette.length];
+
+                const strokeDasharray = `${percent} ${100 - percent}`;
+                const strokeDashoffset = -cumulativePercent;
+
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", "18");
+                circle.setAttribute("cy", "18");
+                circle.setAttribute("r", "15.9155");
+                circle.setAttribute("fill", "transparent");
+                circle.setAttribute("stroke", color);
+                circle.setAttribute("stroke-width", "4");
+                circle.setAttribute("stroke-dasharray", strokeDasharray);
+                circle.setAttribute("stroke-dashoffset", strokeDashoffset);
+                svg.appendChild(circle);
+
+                cumulativePercent += percent;
+
+                const legendItem = document.createElement('div');
+                legendItem.className = "flex items-center justify-between text-[11px]";
+                legendItem.innerHTML = `
+                    <div class="flex items-center space-x-2 truncate">
+                        <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+                        <span class="text-slate-300 truncate font-medium">${catName}</span>
+                    </div>
+                    <span class="font-bold text-slate-200 ml-2">${formatCurr(amount)}</span>
+                `;
+                legendContainer.appendChild(legendItem);
+
+                const singleBox = document.createElement('div');
+                singleBox.className = "p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex justify-between items-center";
+                singleBox.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">${catName}</div>
+                            <div class="text-[10px] text-slate-400">Share: ${percent.toFixed(1)}% of total expenses</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-extrabold text-rose-400">${formatCurr(amount)}</span>
+                    </div>
+                `;
+                singleBoxesContainer.appendChild(singleBox);
+            });
         }
 
         function switchCategoryTab(pillar) {
@@ -855,13 +965,10 @@
 
                 appData.transactions.forEach(tx => {
                     if (tx.type === 'EXPENSE') {
-                        const txDate = new Date(tx.date);
-                        const fromDate = new Date(b.dateFrom);
-                        const toDate = new Date(b.dateTo);
-
-                        if (txDate >= fromDate && txDate <= toDate) {
+                        // Compare date strings directly (YYYY-MM-DD) to prevent timezone mismatch issues
+                        if (tx.date >= b.dateFrom && tx.date <= b.dateTo) {
                             if (b.category.toLowerCase().trim() === 'all' || tx.category.toLowerCase().trim() === b.category.toLowerCase().trim()) {
-                                spentAmount += parseFloat(tx.amount);
+                                spentAmount += parseFloat(tx.amount) || 0;
                             }
                         }
                     }
@@ -930,6 +1037,7 @@
                     <div class="space-y-0.5">
                         <div onclick="openLedgerDetailModal('${l.id}')" class="font-bold text-slate-200 cursor-pointer hover:text-emerald-300">${l.name}</div>
                         <div class="text-[11px] text-emerald-400 font-medium">Group: ${l.group} ${customCat ? '• Tag: ' + customCat.name : ''}</div>
+                        <div class="text-[10px] text-slate-400">${l.showOnDashboard !== false ? '✓ Visible on Dashboard' : '✗ Hidden from Dashboard'}</div>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="text-right">
@@ -1021,6 +1129,7 @@
         function openLedgerModal() {
             populateCustomCatDropdown();
             document.getElementById('edit-ledger-id').value = '';
+            document.getElementById('new-ledger-show-dash').checked = true;
             document.getElementById('ledger-modal-heading').innerHTML = '<i class="fa-solid fa-folder-plus text-emerald-400 mr-2"></i>Create New Ledger';
             document.getElementById('form-add-ledger').reset();
             document.getElementById('modal-add-ledger').classList.remove('hidden');
@@ -1036,6 +1145,7 @@
             document.getElementById('new-ledger-custom-cat').value = ledger.customCatId || '';
             document.getElementById('new-ledger-name').value = ledger.name;
             document.getElementById('new-ledger-balance').value = ledger.balance;
+            document.getElementById('new-ledger-show-dash').checked = ledger.showOnDashboard !== false;
             document.getElementById('ledger-modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-400 mr-2"></i>Edit Ledger';
             document.getElementById('modal-add-ledger').classList.remove('hidden');
         }
@@ -1055,6 +1165,7 @@
             const customCatId = document.getElementById('new-ledger-custom-cat').value;
             const name = document.getElementById('new-ledger-name').value.trim();
             const balance = parseFloat(document.getElementById('new-ledger-balance').value) || 0;
+            const showOnDashboard = document.getElementById('new-ledger-show-dash').checked;
 
             if (!name) return;
 
@@ -1065,6 +1176,7 @@
                     ledger.customCatId = customCatId || null;
                     ledger.name = name;
                     ledger.balance = balance;
+                    ledger.showOnDashboard = showOnDashboard;
                 }
                 showToast("Ledger updated!");
             } else {
@@ -1073,7 +1185,8 @@
                     group: group,
                     customCatId: customCatId || null,
                     name: name,
-                    balance: balance
+                    balance: balance,
+                    showOnDashboard: showOnDashboard
                 });
                 showToast("Ledger created!");
             }
@@ -1154,7 +1267,7 @@
             const category = document.getElementById('tx-category').value;
             const note = document.getElementById('tx-note').value.trim();
 
-            if (!amount || amount <= 0 || !sourceId) return;
+            if (!amount || amount <= 0 || !sourceId || !date) return;
 
             if (type === 'TRANSFER' && sourceId === targetId) {
                 alert("Source and Target ledgers cannot be identical!");
@@ -1241,7 +1354,7 @@
             const dateFrom = document.getElementById('budget-date-from').value;
             const dateTo = document.getElementById('budget-date-to').value;
 
-            if (!category || !amount) return;
+            if (!category || !amount || !dateFrom || !dateTo) return;
 
             if (editId) {
                 const b = appData.budgets.find(item => item.id === editId);
