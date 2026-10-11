@@ -320,12 +320,10 @@
                 <div>
                     <label class="block text-slate-300 font-medium mb-1">Parent Group Category</label>
                     <select id="new-ledger-group" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <option value="Cash">Cash (Asset)</option>
-                        <option value="Bank">Bank (Asset)</option>
-                        <option value="Savings">Savings (Asset)</option>
-                        <option value="Investment">Investment (Asset)</option>
-                        <option value="Receivable">Receivable (Asset - Money to receive)</option>
-                        <option value="Payable">Payable (Liability - Money owed)</option>
+                        <option value="Assets">Assets</option>
+                        <option value="Liability">Liability</option>
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
                     </select>
                 </div>
                 <div>
@@ -469,8 +467,8 @@
     </div>
 
     <script>
-        // Default Ledger Grouping Headers
-        const DEFAULT_GROUPS = ["Cash", "Bank", "Savings", "Investment", "Receivable", "Payable"];
+        // Updated 4 Parent Groups
+        const DEFAULT_GROUPS = ["Assets", "Liability", "Income", "Expense"];
 
         // Master Application State
         let appData = {
@@ -483,12 +481,12 @@
                 { id: "cat-6", name: "Mutual Funds", pillar: "ASSET", icon: "fa-chart-line" }
             ],
             ledgers: [
-                { id: "leg-1", group: "Cash", customCatId: "cat-3", name: "Cash in Hand", balance: 5000, showOnDashboard: true },
-                { id: "leg-2", group: "Bank", customCatId: "cat-3", name: "SBI Savings Bank", balance: 45000, showOnDashboard: true },
-                { id: "leg-3", group: "Savings", customCatId: "cat-3", name: "HDFC Fixed Deposit", balance: 100000, showOnDashboard: true },
-                { id: "leg-4", group: "Investment", customCatId: "cat-6", name: "Zerodha Demat", balance: 65000, showOnDashboard: true },
-                { id: "leg-5", group: "Receivable", customCatId: "cat-3", name: "Ramesh (Borrower)", balance: 12000, showOnDashboard: true },
-                { id: "leg-6", group: "Payable", customCatId: "cat-4", name: "ICICI Credit Card", balance: 18500, showOnDashboard: true }
+                { id: "leg-1", group: "Assets", customCatId: "cat-3", name: "Cash in Hand", balance: 5000, showOnDashboard: true },
+                { id: "leg-2", group: "Assets", customCatId: "cat-3", name: "SBI Savings Bank", balance: 45000, showOnDashboard: true },
+                { id: "leg-3", group: "Assets", customCatId: "cat-3", name: "HDFC Fixed Deposit", balance: 100000, showOnDashboard: true },
+                { id: "leg-4", group: "Assets", customCatId: "cat-6", name: "Zerodha Demat", balance: 65000, showOnDashboard: true },
+                { id: "leg-5", group: "Assets", customCatId: "cat-3", name: "Ramesh (Borrower)", balance: 12000, showOnDashboard: true },
+                { id: "leg-6", group: "Liability", customCatId: "cat-4", name: "ICICI Credit Card", balance: 18500, showOnDashboard: true }
             ],
             transactions: [
                 { id: "tx-1", type: "INCOME", amount: 75000, date: getRecentDate(2), sourceId: "leg-2", targetId: null, category: "Salary & Wages", note: "Monthly Salary Inflow" },
@@ -526,7 +524,7 @@
         }
 
         function initApp() {
-            const saved = localStorage.getItem('dhan_track_v2');
+            const saved = localStorage.getItem('dhan_track_v3');
             if (saved) {
                 try {
                     appData = JSON.parse(saved);
@@ -535,15 +533,21 @@
                 }
             }
             
+            // Migrate old group names to new 4 groups if necessary
             appData.ledgers.forEach(l => {
                 if (l.showOnDashboard === undefined) l.showOnDashboard = true;
+                if (["Cash", "Bank", "Savings", "Investment", "Receivable"].includes(l.group)) {
+                    l.group = "Assets";
+                } else if (l.group === "Payable") {
+                    l.group = "Liability";
+                }
             });
 
             renderAll();
         }
 
         function saveData() {
-            localStorage.setItem('dhan_track_v2', JSON.stringify(appData));
+            localStorage.setItem('dhan_track_v3', JSON.stringify(appData));
             renderAll();
         }
 
@@ -584,19 +588,17 @@
             let totalLiabilities = 0;
 
             const groupMeta = {
-                Cash: { icon: 'fa-money-bill-wave', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                Bank: { icon: 'fa-building-columns', color: 'text-teal-400', bg: 'bg-teal-500/10' },
-                Savings: { icon: 'fa-piggy-bank', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-                Investment: { icon: 'fa-chart-line', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-                Receivable: { icon: 'fa-hand-holding-dollar', color: 'text-emerald-300', bg: 'bg-emerald-600/10' },
-                Payable: { icon: 'fa-credit-card', color: 'text-rose-400', bg: 'bg-rose-500/10' }
+                Assets: { icon: 'fa-building-columns', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                Liability: { icon: 'fa-credit-card', color: 'text-rose-400', bg: 'bg-rose-500/10' },
+                Income: { icon: 'fa-arrow-trend-up', color: 'text-teal-400', bg: 'bg-teal-500/10' },
+                Expense: { icon: 'fa-arrow-trend-down', color: 'text-amber-400', bg: 'bg-amber-500/10' }
             };
 
             appData.ledgers.forEach(l => {
                 const bal = calculateLedgerCurrentBalance(l.id);
-                if (l.group === 'Payable') {
+                if (l.group === 'Liability') {
                     totalLiabilities += bal;
-                } else {
+                } else if (l.group === 'Assets') {
                     totalAssets += bal;
                 }
             });
@@ -630,7 +632,7 @@
                         </div>
                     </div>
                     <div onclick="openLedgerDetailModal('${l.id}')" class="text-right cursor-pointer pt-1 border-t border-slate-800/60">
-                        <span class="text-xs font-extrabold ${l.group === 'Payable' ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(bal)}</span>
+                        <span class="text-xs font-extrabold ${l.group === 'Liability' ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(bal)}</span>
                     </div>
                 `;
                 container.appendChild(singleBox);
@@ -965,7 +967,6 @@
 
                 appData.transactions.forEach(tx => {
                     if (tx.type === 'EXPENSE') {
-                        // Compare date strings directly (YYYY-MM-DD) to prevent timezone mismatch issues
                         if (tx.date >= b.dateFrom && tx.date <= b.dateTo) {
                             if (b.category.toLowerCase().trim() === 'all' || tx.category.toLowerCase().trim() === b.category.toLowerCase().trim()) {
                                 spentAmount += parseFloat(tx.amount) || 0;
