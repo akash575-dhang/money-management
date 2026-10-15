@@ -634,6 +634,25 @@
             </div>
         </div>
 
+        <!-- Confirmation Warning Modal -->
+        <div x-show="showConfirmModal" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white" x-text="confirmTitle"></h3>
+                        <p class="text-xs text-slate-400 mt-0.5" x-text="confirmMessage"></p>
+                    </div>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button @click="showConfirmModal = false" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl text-xs transition">Cancel</button>
+                    <button @click="onConfirm(); showConfirmModal = false;" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-2.5 rounded-xl text-xs transition">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Application Logic Script -->
@@ -650,6 +669,12 @@
                 showCategoryModal: false,
                 showBudgetModal: false,
                 showSettings: false,
+                showConfirmModal: false,
+
+                // Confirmation State
+                confirmTitle: '',
+                confirmMessage: '',
+                onConfirm: null,
 
                 // Data Models
                 ledgers: [],
@@ -687,6 +712,9 @@
                     this.$watch('transactions', () => this.saveToStorage());
                     this.$watch('budgets', () => this.saveToStorage());
                     this.$watch('activeTab', () => {
+                        setTimeout(() => lucide.createIcons(), 50);
+                    });
+                    this.$watch('showConfirmModal', () => {
                         setTimeout(() => lucide.createIcons(), 50);
                     });
                 },
@@ -899,6 +927,14 @@
                     return 'bg-emerald-500';
                 },
 
+                // Generic Confirmation Helper
+                confirmAction(title, message, callback) {
+                    this.confirmTitle = title;
+                    this.confirmMessage = message;
+                    this.onConfirm = callback;
+                    this.showConfirmModal = true;
+                },
+
                 // Actions & Modals
                 openAddTransaction() {
                     if (this.ledgers.length === 0) {
@@ -946,8 +982,14 @@
                 },
 
                 deleteTransaction(id) {
-                    this.transactions = this.transactions.filter(t => t.id !== id);
-                    this.showToast('Transaction deleted.');
+                    this.confirmAction(
+                        'Delete Transaction',
+                        'Are you sure you want to delete this transaction?',
+                        () => {
+                            this.transactions = this.transactions.filter(t => t.id !== id);
+                            this.showToast('Transaction deleted.');
+                        }
+                    );
                 },
 
                 openAddLedgerModal() {
@@ -982,8 +1024,14 @@
                         this.showToast('You must keep at least one ledger.');
                         return;
                     }
-                    this.ledgers = this.ledgers.filter(l => l.id !== id);
-                    this.showToast('Ledger deleted.');
+                    this.confirmAction(
+                        'Delete Ledger',
+                        'Are you sure you want to delete this ledger? Account history will be affected.',
+                        () => {
+                            this.ledgers = this.ledgers.filter(l => l.id !== id);
+                            this.showToast('Ledger deleted.');
+                        }
+                    );
                 },
 
                 openAddCategoryModal() {
@@ -1002,8 +1050,14 @@
                 },
 
                 deleteCategory(id) {
-                    this.categories = this.categories.filter(c => c.id !== id);
-                    this.showToast('Category deleted.');
+                    this.confirmAction(
+                        'Delete Category',
+                        'Are you sure you want to delete this category?',
+                        () => {
+                            this.categories = this.categories.filter(c => c.id !== id);
+                            this.showToast('Category deleted.');
+                        }
+                    );
                 },
 
                 openAddBudgetModal() {
@@ -1028,8 +1082,14 @@
                 },
 
                 deleteBudget(id) {
-                    this.budgets = this.budgets.filter(b => b.id !== id);
-                    this.showToast('Budget removed.');
+                    this.confirmAction(
+                        'Delete Budget',
+                        'Are you sure you want to remove this budget limit?',
+                        () => {
+                            this.budgets = this.budgets.filter(b => b.id !== id);
+                            this.showToast('Budget removed.');
+                        }
+                    );
                 }
             }
         }
