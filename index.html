@@ -2,1426 +2,1037 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DhanTracker - Indian Rupee Money Manager</title>
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKASH - Money Management App</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* Custom scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative pb-20 selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen sm:py-6" 
+      x-data="moneyApp()" 
+      x-init="initData(); $nextTick(() => lucide.createIcons())">
 
-    <!-- App Header -->
-    <header class="bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 px-4 py-3 border-b border-slate-800 flex justify-between items-center shadow-md">
-        <div class="flex items-center space-x-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                <i class="fa-solid fa-indian-rupee-sign text-base font-bold"></i>
-            </div>
-            <div>
-                <h1 class="text-base font-extrabold leading-none text-white tracking-wide">DhanTracker</h1>
-                <span class="text-[10px] text-emerald-400 font-semibold tracking-wider">SMART RUPEE MANAGER</span>
+    <!-- Mobile Device Container Frame -->
+    <div class="w-full sm:max-w-md h-screen sm:h-[860px] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 bg-slate-900 flex flex-col shadow-2xl overflow-hidden relative">
+
+        <!-- Top Status Bar Simulation -->
+        <div class="bg-slate-900/90 backdrop-blur-md px-6 pt-3 pb-2 flex justify-between items-center text-xs text-slate-400 select-none z-30">
+            <span class="font-semibold text-slate-200 text-sm tracking-wide">AKASH</span>
+            <div class="flex items-center space-x-2">
+                <span x-text="currentDateFormatted" class="text-slate-400 text-xs"></span>
+                <button @click="showSettings = true" class="p-1 hover:text-white transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
-        <div class="flex items-center gap-1.5">
-            <button onclick="openLedgerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-medium px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all active:scale-95 shadow-md shadow-emerald-600/20">
-                <i class="fa-solid fa-plus text-[10px]"></i>
-                <span>Ledger</span>
-            </button>
-            <button onclick="openCategoryModal()" class="bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-medium px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all active:scale-95 border border-slate-700">
-                <i class="fa-solid fa-tags text-[10px] text-indigo-400"></i>
-                <span>Category</span>
-            </button>
-        </div>
-    </header>
 
-    <!-- Main Content Viewports -->
-    <main id="app-container" class="p-4 flex-1 overflow-y-auto space-y-5">
-        
-        <!-- 1. DASHBOARD VIEW -->
-        <section id="view-dashboard" class="space-y-4">
-            <!-- Total Net Worth Card -->
-            <div class="bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 rounded-2xl p-5 text-white shadow-2xl relative overflow-hidden border border-indigo-500/20">
-                <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="flex justify-between items-start mb-1">
-                    <span class="text-xs font-semibold text-indigo-200 uppercase tracking-wider">Net Worth</span>
-                    <span id="net-worth-badge" class="bg-emerald-500/20 text-emerald-300 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border border-emerald-500/30">Healthy</span>
-                </div>
-                <div class="text-3xl font-extrabold tracking-tight my-1" id="total-balance">₹ 0.00</div>
-                <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-indigo-500/20 text-xs">
-                    <div>
-                        <span class="text-slate-400 block text-[11px]">Total Assets</span>
-                        <span class="font-bold text-emerald-400 text-sm" id="total-assets">₹ 0.00</span>
-                    </div>
-                    <div>
-                        <span class="text-slate-400 block text-[11px]">Total Liabilities</span>
-                        <span class="font-bold text-rose-400 text-sm" id="total-liabilities">₹ 0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Ledgers Render Area (Pashapashi Duto Kore Box) -->
+        <!-- Header Bar with Quick Add -->
+        <header class="bg-slate-900 px-5 py-3 border-b border-slate-800 flex justify-between items-center z-20">
             <div>
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Accounts & Individual Ledgers</h2>
-                    <span class="text-[11px] text-emerald-400 font-medium"><i class="fa-solid fa-hand-pointer mr-1"></i>Tap to view</span>
-                </div>
+                <h1 class="text-lg font-bold capitalize tracking-tight text-white" x-text="activeTab"></h1>
+                <p class="text-xs text-slate-400" x-text="getSubtitle()"></p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button @click="openAddTransaction()" class="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white p-2.5 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center transition active:scale-95">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
 
-                <div class="grid grid-cols-2 gap-2.5" id="categories-container">
-                    <!-- Dynamic Ledgers render here -->
-                </div>
+        <!-- Main Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 hide-scrollbar">
+            
+            <!-- Toast Notification Banner -->
+            <div x-show="toast.show" x-transition class="mb-4 p-3 rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-lg flex items-center justify-between" x-cloak>
+                <span x-text="toast.message"></span>
+                <button @click="toast.show = false" class="text-indigo-200 hover:text-white">&times;</button>
             </div>
 
-            <!-- Expense Breakdown Section with Round Chart and Single Category Boxes -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
-                <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expense Breakdown</h2>
-                    <span id="chart-total-expense" class="text-xs font-bold text-rose-400">₹ 0.00</span>
-                </div>
+            <!-- ================= DASHBOARD TAB ================= -->
+            <div x-show="activeTab === 'dashboard'" x-transition class="space-y-5" x-cloak>
                 
-                <!-- Donut Chart & Legend -->
-                <div class="flex flex-col sm:flex-row items-center justify-around gap-4 py-1">
-                    <div class="relative w-36 h-36 flex items-center justify-center">
-                        <svg id="expense-donut-chart" class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                            <!-- Dynamic Donut Segments rendered here -->
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                            <span class="text-[10px] text-slate-400 font-medium">Expenses</span>
-                            <span id="donut-center-text" class="text-xs font-bold text-white">₹0</span>
+                <!-- Net Worth & Balance Card -->
+                <div class="bg-gradient-to-br from-indigo-900/80 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-xs font-medium text-indigo-300 uppercase tracking-wider">Total Net Worth</p>
+                            <h2 class="text-3xl font-extrabold text-white mt-1" x-text="formatCurrency(calculateNetWorth())"></h2>
+                        </div>
+                        <span class="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-1 rounded-full font-medium border border-indigo-500/30">Active</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400">Income (Month)</p>
+                                <p class="text-sm font-bold text-emerald-400" x-text="formatCurrency(currentMonthIncome)"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                                <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400">Expense (Month)</p>
+                                <p class="text-sm font-bold text-rose-400" x-text="formatCurrency(currentMonthExpense)"></p>
+                            </div>
                         </div>
                     </div>
-                    <div id="expense-chart-legend" class="flex-1 w-full space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                        <!-- Dynamic Legends Render here -->
+                </div>
+
+                <!-- Quick Ledger Summary Carousel -->
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-slate-200">Ledger Balances</h3>
+                        <button @click="activeTab = 'ledgers'" class="text-xs text-indigo-400 hover:underline">View All</button>
+                    </div>
+                    <div class="flex space-x-3 overflow-x-auto pb-2 hide-scrollbar">
+                        <template x-for="ledger in ledgers" :key="ledger.id">
+                            <div class="min-w-[150px] bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white" :style="'background-color: ' + (ledger.color || '#6366f1')">
+                                        <i :data-lucide="ledger.icon || 'wallet'" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded" x-text="ledger.type"></span>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 truncate" x-text="ledger.name"></p>
+                                    <p class="text-sm font-bold text-white mt-0.5" x-text="formatCurrency(getLedgerBalance(ledger.id))"></p>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
-                <!-- Single Different Boxes for Each Expense Category -->
-                <div class="pt-2 border-t border-slate-800 space-y-2">
-                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Category Wise Expenses</h3>
-                    <div id="single-expense-boxes" class="grid grid-cols-1 gap-2.5">
-                        <!-- Single boxes for each expense category rendered here -->
+                <!-- Expense Breakdown SVG Doughnut Chart Widget -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-slate-200">Expenses Breakdown</h3>
+                        <span class="text-xs text-slate-400">This Month</span>
+                    </div>
+
+                    <div x-show="expenseChartData.length > 0">
+                        <div class="flex flex-col sm:flex-row items-center justify-around my-2 gap-4">
+                            <!-- Dynamic SVG Doughnut Chart -->
+                            <div class="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                    <!-- Background ring -->
+                                    <path class="text-slate-800" stroke-width="3.8" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <!-- Segments -->
+                                    <template x-for="item in expenseChartData" :key="item.id">
+                                        <path :stroke="item.color" 
+                                              stroke-width="3.8" 
+                                              :stroke-dasharray="item.strokeDasharray" 
+                                              :stroke-dashoffset="item.strokeDashoffset" 
+                                              fill="none" 
+                                              class="transition-all duration-500 ease-out hover:opacity-80" />
+                                    </template>
+                                </svg>
+                                <div class="absolute text-center">
+                                    <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total</p>
+                                    <p class="text-xs font-bold text-white mt-0.5" x-text="formatCurrency(currentMonthExpense)"></p>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Chart Legend -->
+                            <div class="w-full space-y-2 max-h-36 overflow-y-auto hide-scrollbar pr-1">
+                                <template x-for="item in expenseChartData" :key="item.id">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <div class="flex items-center space-x-2 truncate">
+                                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="'background-color: ' + item.color"></span>
+                                            <span class="text-slate-300 truncate" x-text="item.name"></span>
+                                        </div>
+                                        <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                                            <span class="font-bold text-white" x-text="formatCurrency(item.amount)"></span>
+                                            <span class="text-[10px] text-slate-400 w-8 text-right" x-text="item.percent + '%'"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="expenseChartData.length === 0" class="text-center py-8 text-xs text-slate-500">
+                        No expenses recorded for this month.
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- 2. CATEGORIES VIEW -->
-        <section id="view-categories" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
+                <!-- Recent Transactions -->
                 <div>
-                    <h2 class="text-base font-bold text-white">Custom Categories</h2>
-                    <p class="text-xs text-slate-400">Pillar breakdown: Expense, Income, Asset, Liability</p>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-slate-200">Recent Transactions</h3>
+                        <button @click="activeTab = 'transactions'" class="text-xs text-indigo-400 hover:underline">View All</button>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl divide-y divide-slate-800/80 overflow-hidden">
+                        <template x-for="tx in transactions.slice(0, 5)" :key="tx.id">
+                            <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/50 transition">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                                         :class="tx.type === 'Income' ? 'bg-emerald-500/20 text-emerald-400' : (tx.type === 'Expense' ? 'bg-rose-500/20 text-rose-400' : 'bg-blue-500/20 text-blue-400')">
+                                        <i :data-lucide="getTransactionIcon(tx)" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-slate-200" x-text="getTransactionTitle(tx)"></p>
+                                        <p class="text-[11px] text-slate-400" x-text="tx.date + ' • ' + getLedgerName(tx.ledgerId || tx.sourceLedgerId)"></p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold" 
+                                       :class="tx.type === 'Income' ? 'text-emerald-400' : (tx.type === 'Expense' ? 'text-rose-400' : 'text-slate-200')"
+                                       x-text="(tx.type === 'Income' ? '+' : (tx.type === 'Expense' ? '-' : '')) + formatCurrency(tx.amount)"></p>
+                                    <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400" x-text="tx.type"></span>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="transactions.length === 0" class="p-6 text-center text-xs text-slate-500">
+                            No transactions recorded yet.
+                        </div>
+                    </div>
                 </div>
-                <button onclick="openCategoryModal()" class="bg-indigo-600 hover:bg-indigo-500 text-xs text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 active:scale-95 shadow-md shadow-indigo-600/20">
-                    <i class="fa-solid fa-plus"></i> Add Category
-                </button>
+
             </div>
 
-            <!-- Categories Pillar Tabs -->
-            <div class="flex gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                <button onclick="switchCategoryTab('EXPENSE')" id="cat-tab-EXPENSE" class="cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-rose-400 bg-slate-800 transition-all">Expense</button>
-                <button onclick="switchCategoryTab('INCOME')" id="cat-tab-INCOME" class="cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-slate-400 transition-all">Income</button>
-                <button onclick="switchCategoryTab('ASSET')" id="cat-tab-ASSET" class="cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-slate-400 transition-all">Asset</button>
-                <button onclick="switchCategoryTab('LIABILITY')" id="cat-tab-LIABILITY" class="cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-slate-400 transition-all">Liability</button>
-            </div>
-
-            <!-- Category List Render Target -->
-            <div id="category-type-list" class="space-y-2.5">
-                <!-- Custom categories rendered dynamically -->
-            </div>
-        </section>
-
-        <!-- 3. TRANSACTIONS VIEW -->
-        <section id="view-transactions" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-base font-bold text-white">Transactions History</h2>
-                <button onclick="openTxModal()" class="bg-emerald-600 hover:bg-emerald-500 text-xs text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-600/20">
-                    <i class="fa-solid fa-plus"></i> New Record
-                </button>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                <button onclick="filterTx('ALL')" class="tx-filter-btn bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">All</button>
-                <button onclick="filterTx('INCOME')" class="tx-filter-btn bg-slate-900 text-slate-300 text-xs px-3 py-1.5 rounded-full font-medium border border-slate-800">Income</button>
-                <button onclick="filterTx('EXPENSE')" class="tx-filter-btn bg-slate-900 text-slate-300 text-xs px-3 py-1.5 rounded-full font-medium border border-slate-800">Expense</button>
-                <button onclick="filterTx('TRANSFER')" class="tx-filter-btn bg-slate-900 text-slate-300 text-xs px-3 py-1.5 rounded-full font-medium border border-slate-800">Transfer</button>
-            </div>
-
-            <div id="all-transactions-list" class="space-y-2.5">
-                <!-- Dynamic Transactions -->
-            </div>
-        </section>
-
-        <!-- 4. BUDGET VIEW -->
-        <section id="view-budget" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-base font-bold text-white">Budget & Limits</h2>
-                    <p class="text-xs text-slate-400">Date range expenditure goals</p>
+            <!-- ================= TRANSACTIONS TAB ================= -->
+            <div x-show="activeTab === 'transactions'" x-transition class="space-y-4" x-cloak>
+                
+                <!-- Search & Filters -->
+                <div class="space-y-2">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <input type="text" x-model="txSearch" placeholder="Search transactions or notes..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex space-x-2 overflow-x-auto pb-1 hide-scrollbar">
+                        <button @click="txFilterType = 'All'" :class="txFilterType === 'All' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">All</button>
+                        <button @click="txFilterType = 'Income'" :class="txFilterType === 'Income' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">Income</button>
+                        <button @click="txFilterType = 'Expense'" :class="txFilterType === 'Expense' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">Expense</button>
+                        <button @click="txFilterType = 'Transfer'" :class="txFilterType === 'Transfer' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">Transfer</button>
+                    </div>
                 </div>
-                <button onclick="openBudgetModal()" class="bg-emerald-600 hover:bg-emerald-500 text-xs text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-600/20">
-                    <i class="fa-solid fa-plus"></i> Create Budget
-                </button>
-            </div>
 
-            <div id="budget-list-container" class="space-y-3.5">
-                <!-- Dynamic Budget Cards -->
-            </div>
-        </section>
-
-        <!-- 5. LEDGERS DIRECTORY VIEW -->
-        <section id="view-ledgers" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-base font-bold text-white">Ledger Directory</h2>
-                    <p class="text-xs text-slate-400">Manage all registered ledger accounts</p>
+                <!-- Transactions List -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl divide-y divide-slate-800/80 overflow-hidden shadow-sm">
+                    <template x-for="tx in filteredTransactions" :key="tx.id">
+                        <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/50 transition group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                                     :class="tx.type === 'Income' ? 'bg-emerald-500/20 text-emerald-400' : (tx.type === 'Expense' ? 'bg-rose-500/20 text-rose-400' : 'bg-blue-500/20 text-blue-400')">
+                                    <i :data-lucide="getTransactionIcon(tx)" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-200" x-text="getTransactionTitle(tx)"></p>
+                                    <p class="text-[11px] text-slate-400" x-text="tx.date + ' • ' + (tx.note || getLedgerName(tx.ledgerId || tx.sourceLedgerId))"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="text-right">
+                                    <p class="text-sm font-bold" 
+                                       :class="tx.type === 'Income' ? 'text-emerald-400' : (tx.type === 'Expense' ? 'text-rose-400' : 'text-slate-200')"
+                                       x-text="(tx.type === 'Income' ? '+' : (tx.type === 'Expense' ? '-' : '')) + formatCurrency(tx.amount)"></p>
+                                    <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400" x-text="tx.type"></span>
+                                </div>
+                                <button @click="deleteTransaction(tx.id)" class="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="filteredTransactions.length === 0" class="p-8 text-center text-xs text-slate-500">
+                        No transactions found matching criteria.
+                    </div>
                 </div>
-                <button onclick="openLedgerModal()" class="text-xs text-emerald-400 font-medium hover:underline">+ New Ledger</button>
+
             </div>
-            <div id="ledger-directory-list" class="space-y-3">
-                <!-- Dynamic Ledger Summary Cards -->
-            </div>
-        </section>
-    </main>
 
-    <!-- Floating Action Button for Rapid Transaction Entry -->
-    <button onclick="openTxModal()" class="fixed bottom-16 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center text-xl hover:scale-105 active:scale-95 transition-all">
-        <i class="fa-solid fa-plus"></i>
-    </button>
-
-    <!-- Navigation Bar -->
-    <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-30 flex justify-around items-center py-2 px-1">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item text-emerald-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all">
-            <i class="fa-solid fa-chart-pie text-base"></i>
-            <span class="text-[10px] font-medium mt-0.5">Dashboard</span>
-        </button>
-        <button onclick="switchTab('categories')" id="nav-categories" class="nav-item text-slate-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all">
-            <i class="fa-solid fa-layer-group text-base"></i>
-            <span class="text-[10px] font-medium mt-0.5">Categories</span>
-        </button>
-        <button onclick="switchTab('transactions')" id="nav-transactions" class="nav-item text-slate-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all">
-            <i class="fa-solid fa-arrow-right-arrow-left text-base"></i>
-            <span class="text-[10px] font-medium mt-0.5">Transactions</span>
-        </button>
-        <button onclick="switchTab('budget')" id="nav-budget" class="nav-item text-slate-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all">
-            <i class="fa-solid fa-bullseye text-base"></i>
-            <span class="text-[10px] font-medium mt-0.5">Budgets</span>
-        </button>
-        <button onclick="switchTab('ledgers')" id="nav-ledgers" class="nav-item text-slate-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all">
-            <i class="fa-solid fa-book-bookmark text-base"></i>
-            <span class="text-[10px] font-medium mt-0.5">Ledgers</span>
-        </button>
-    </nav>
-
-    <!-- MODAL 1: LEDGER DRILL-DOWN TRANSACTIONS (Clicking a Ledger) -->
-    <div id="modal-ledger-tx" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden transition-opacity">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 rounded-t-2xl">
-                <div>
-                    <h3 id="modal-ledger-title" class="font-bold text-white text-base">Ledger Details</h3>
-                    <p id="modal-ledger-subtitle" class="text-xs text-emerald-400">Category Balance</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="btn-edit-ledger-inline" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs" title="Edit Ledger">
-                        <i class="fa-solid fa-pen-to-square"></i>
+            <!-- ================= LEDGERS TAB ================= -->
+            <div x-show="activeTab === 'ledgers'" x-transition class="space-y-4" x-cloak>
+                
+                <div class="flex justify-between items-center">
+                    <p class="text-xs text-slate-400">Manage accounts, receivables & payables</p>
+                    <button @click="openAddLedgerModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center space-x-1 shadow">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Ledger</span>
                     </button>
-                    <button onclick="closeModal('modal-ledger-tx')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center hover:text-white">
-                        <i class="fa-solid fa-xmark"></i>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <template x-for="ledger in ledgers" :key="ledger.id">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-lg shadow-inner" :style="'background-color: ' + (ledger.color || '#6366f1')">
+                                    <i :data-lucide="ledger.icon || 'wallet'" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="text-sm font-bold text-slate-200" x-text="ledger.name"></h4>
+                                        <span class="text-[10px] uppercase font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded" x-text="ledger.type"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-1">Opening: <span x-text="formatCurrency(ledger.openingBalance)"></span></p>
+                                </div>
+                            </div>
+                            <div class="text-right flex items-center space-x-3">
+                                <div>
+                                    <p class="text-xs text-slate-400">Current Balance</p>
+                                    <p class="text-base font-extrabold text-white mt-0.5" x-text="formatCurrency(getLedgerBalance(ledger.id))"></p>
+                                </div>
+                                <div class="flex flex-col space-y-1">
+                                    <button @click="editLedger(ledger)" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button @click="deleteLedger(ledger.id)" class="p-1.5 text-slate-400 hover:text-rose-400 bg-slate-800 hover:bg-slate-700 rounded-lg transition">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+
+            <!-- ================= CATEGORIES TAB ================= -->
+            <div x-show="activeTab === 'categories'" x-transition class="space-y-4" x-cloak>
+                
+                <div class="flex justify-between items-center">
+                    <p class="text-xs text-slate-400">Organize income & expense streams</p>
+                    <button @click="openAddCategoryModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center space-x-1 shadow">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Category</span>
                     </button>
                 </div>
-            </div>
-            
-            <div class="p-3 bg-slate-950/60 flex justify-between items-center border-b border-slate-800 text-xs px-4">
-                <div>
-                    <span class="text-slate-400 block text-[10px]">CURRENT LEDGER BALANCE</span>
-                    <span id="modal-ledger-balance" class="text-base font-bold text-emerald-400">₹ 0.00</span>
-                </div>
-                <div class="text-right">
-                    <span class="text-slate-400 block text-[10px]">TOTAL TRANSACTIONS</span>
-                    <span id="modal-ledger-tx-count" class="text-xs font-semibold text-slate-200">0</span>
-                </div>
-            </div>
 
-            <div id="modal-ledger-tx-list" class="p-4 space-y-2.5 overflow-y-auto flex-1">
-                <!-- Transactions for this specific ledger rendered here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 2: ADD / EDIT CUSTOM CATEGORY -->
-    <div id="modal-add-category" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="category-modal-heading" class="font-bold text-white text-base"><i class="fa-solid fa-tags text-indigo-400 mr-2"></i>Add Custom Category</h3>
-                <button onclick="closeModal('modal-add-category')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <form id="form-add-category" onsubmit="handleSaveCategory(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-cat-id">
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Category Type / Pillar</label>
-                    <select id="cat-pillar" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 font-semibold">
-                        <option value="EXPENSE">Expense (Outflow tag)</option>
-                        <option value="INCOME">Income (Inflow tag)</option>
-                        <option value="ASSET">Asset (Valuable account)</option>
-                        <option value="LIABILITY">Liability (Debt / Owed account)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Category Name</label>
-                    <input type="text" id="cat-name" placeholder="e.g. Groceries, Freelance, Vehicles, Loans" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Icon (FontAwesome Class)</label>
-                    <input type="text" id="cat-icon" placeholder="fa-basket-shopping, fa-briefcase, fa-car" value="fa-tag" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-add-category')" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-lg font-medium">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium">Save Category</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 3: ADD / EDIT LEDGER -->
-    <div id="modal-add-ledger" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="ledger-modal-heading" class="font-bold text-white text-base"><i class="fa-solid fa-folder-plus text-emerald-400 mr-2"></i>Create New Ledger</h3>
-                <button onclick="closeModal('modal-add-ledger')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <form id="form-add-ledger" onsubmit="handleSaveLedger(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-ledger-id">
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Parent Group Category</label>
-                    <select id="new-ledger-group" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <option value="Assets">Assets</option>
-                        <option value="Liability">Liability</option>
-                        <option value="Income">Income</option>
-                        <option value="Expense">Expense</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Link to Custom Category (Optional)</label>
-                    <select id="new-ledger-custom-cat" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Ledger Name</label>
-                    <input type="text" id="new-ledger-name" placeholder="e.g. SBI Bank A/c, Paytm, Sharma Ji" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Initial Opening Balance (₹)</label>
-                    <input type="number" step="any" id="new-ledger-balance" placeholder="0.00" value="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                </div>
-                <!-- Show on Dashboard Checkbox -->
-                <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" id="new-ledger-show-dash" checked class="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-600 focus:ring-0">
-                    <label for="new-ledger-show-dash" class="text-slate-300 font-medium cursor-pointer">Show on Dashboard</label>
-                </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-add-ledger')" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-lg font-medium">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500">Save Ledger</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 4: ADD / EDIT TRANSACTION -->
-    <div id="modal-add-tx" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="tx-modal-heading" class="font-bold text-white text-base"><i class="fa-solid fa-receipt text-emerald-400 mr-2"></i>Add New Transaction</h3>
-                <button onclick="closeModal('modal-add-tx')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <form id="form-add-tx" onsubmit="handleSaveTransaction(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-tx-id">
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Transaction Type</label>
-                    <select id="tx-type" onchange="toggleTxTypeFields()" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500 font-semibold">
-                        <option value="EXPENSE">Expense (- Outflow)</option>
-                        <option value="INCOME">Income (+ Inflow)</option>
-                        <option value="TRANSFER">Transfer between Ledgers</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <template x-for="cat in categories" :key="cat.id">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white" :style="'background-color: ' + (cat.color || '#6366f1')">
+                                    <i :data-lucide="cat.icon || 'tag'" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200" x-text="cat.name"></h4>
+                                    <span class="text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 inline-block" 
+                                          :class="cat.type === 'Income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'" 
+                                          x-text="cat.type"></span>
+                                </div>
+                            </div>
+                            <button @click="deleteCategory(cat.id)" class="text-slate-500 hover:text-rose-400 p-1 transition">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </template>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+            </div>
+
+            <!-- ================= BUDGETS TAB ================= -->
+            <div x-show="activeTab === 'budgets'" x-transition class="space-y-4" x-cloak>
+                
+                <div class="flex justify-between items-center">
                     <div>
-                        <label class="block text-slate-300 font-medium mb-1">Amount (₹)</label>
-                        <input type="number" step="any" id="tx-amount" placeholder="0.00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500 font-bold text-sm">
+                        <h3 class="text-sm font-semibold text-slate-200">Monthly Budgets</h3>
+                        <p class="text-xs text-slate-400">Track and cap your category spending</p>
                     </div>
-                    <div>
-                        <label class="block text-slate-300 font-medium mb-1">Date</label>
-                        <input type="date" id="tx-date" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                    <button @click="openAddBudgetModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-medium flex items-center space-x-1 shadow">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Set Budget</span>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="b in budgets" :key="b.id">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                                        <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-200" x-text="getCategoryName(b.categoryId)"></h4>
+                                </div>
+                                <button @click="deleteBudget(b.id)" class="text-slate-500 hover:text-rose-400">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-400">Spent: <strong class="text-white" x-text="formatCurrency(getSpentForCategory(b.categoryId))"></strong></span>
+                                    <span class="text-slate-400">Limit: <strong class="text-white" x-text="formatCurrency(b.amount)"></strong></span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-500" 
+                                         :style="'width: ' + Math.min(100, (getSpentForCategory(b.categoryId) / b.amount) * 100) + '%'"
+                                         :class="getBudgetColorClass(getSpentForCategory(b.categoryId), b.amount)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="budgets.length === 0" class="text-center py-10 text-xs text-slate-500">
+                        No active budgets set. Click 'Set Budget' to get started.
                     </div>
                 </div>
 
-                <!-- Source Ledger -->
-                <div id="field-source-ledger">
-                    <label id="lbl-source-ledger" class="block text-slate-300 font-medium mb-1">Source Account / Ledger</label>
-                    <select id="tx-source" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-
-                <!-- Target Ledger (Only for Transfers) -->
-                <div id="field-target-ledger" class="hidden">
-                    <label class="block text-slate-300 font-medium mb-1">Destination Account / Ledger</label>
-                    <select id="tx-target" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Category Tag</label>
-                    <select id="tx-category" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <!-- Custom categories loaded dynamically -->
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Description / Notes</label>
-                    <input type="text" id="tx-note" placeholder="Optional details..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-add-tx')" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-lg font-medium">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium">Save Transaction</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 5: CREATE / EDIT BUDGET -->
-    <div id="modal-add-budget" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="budget-modal-heading" class="font-bold text-white text-base"><i class="fa-solid fa-bullseye text-emerald-400 mr-2"></i>New Budget Goal</h3>
-                <button onclick="closeModal('modal-add-budget')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <form id="form-add-budget" onsubmit="handleSaveBudget(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-budget-id">
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Budget Category</label>
-                    <select id="budget-category" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                        <!-- Populated with Expense categories -->
-                    </select>
+        </main>
+
+        <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-3 py-2 flex justify-around items-center z-30">
+            <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center space-y-1 transition py-1 px-3">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Dashboard</span>
+            </button>
+            <button @click="activeTab = 'transactions'" :class="activeTab === 'transactions' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center space-y-1 transition py-1 px-3">
+                <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Txns</span>
+            </button>
+            <button @click="activeTab = 'ledgers'" :class="activeTab === 'ledgers' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center space-y-1 transition py-1 px-3">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Ledgers</span>
+            </button>
+            <button @click="activeTab = 'categories'" :class="activeTab === 'categories' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center space-y-1 transition py-1 px-3">
+                <i data-lucide="tags" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Categories</span>
+            </button>
+            <button @click="activeTab = 'budgets'" :class="activeTab === 'budgets' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center space-y-1 transition py-1 px-3">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Budgets</span>
+            </button>
+        </nav>
+
+        <!-- ================= MODALS ================= -->
+
+        <!-- Add Transaction Modal -->
+        <div x-show="showTxModal" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-[30px] sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-white">Record Transaction</h3>
+                    <button @click="showTxModal = false" class="text-slate-400 hover:text-white">&times;</button>
                 </div>
 
-                <div>
-                    <label class="block text-slate-300 font-medium mb-1">Spending Limit Amount (₹)</label>
-                    <input type="number" step="any" id="budget-amount" placeholder="0.00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500 font-bold">
+                <!-- Type Selector -->
+                <div class="grid grid-cols-3 gap-2 bg-slate-950 p-1 rounded-xl">
+                    <button type="button" @click="txForm.type = 'Expense'" :class="txForm.type === 'Expense' ? 'bg-rose-600 text-white shadow' : 'text-slate-400'" class="py-2 rounded-lg text-xs font-semibold transition">Expense</button>
+                    <button type="button" @click="txForm.type = 'Income'" :class="txForm.type === 'Income' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400'" class="py-2 rounded-lg text-xs font-semibold transition">Income</button>
+                    <button type="button" @click="txForm.type = 'Transfer'" :class="txForm.type === 'Transfer' ? 'bg-blue-600 text-white shadow' : 'text-slate-400'" class="py-2 rounded-lg text-xs font-semibold transition">Transfer</button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <form @submit.prevent="saveTransaction" class="space-y-3.5">
                     <div>
-                        <label class="block text-slate-300 font-medium mb-1">Date From</label>
-                        <input type="date" id="budget-date-from" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Amount (₹)</label>
+                        <input type="number" step="0.01" x-model.number="txForm.amount" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-bold">
                     </div>
-                    <div>
-                        <label class="block text-slate-300 font-medium mb-1">Date To</label>
-                        <input type="date" id="budget-date-to" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                </div>
 
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-add-budget')" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-lg font-medium">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium">Save Budget</button>
-                </div>
-            </form>
+                    <!-- Ledger / Source Ledger -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1" x-text="txForm.type === 'Transfer' ? 'Source Ledger' : 'Ledger'"></label>
+                        <select x-model="txForm.ledgerId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <template x-for="l in ledgers" :key="l.id">
+                                <option :value="l.id" x-text="l.name + ' (' + formatCurrency(getLedgerBalance(l.id)) + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- Destination Ledger for Transfers -->
+                    <div x-show="txForm.type === 'Transfer'">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Destination Ledger</label>
+                        <select x-model="txForm.destLedgerId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <template x-for="l in ledgers.filter(x => x.id !== txForm.ledgerId)" :key="l.id">
+                                <option :value="l.id" x-text="l.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- Category (for Income/Expense) -->
+                    <div x-show="txForm.type !== 'Transfer'">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                        <select x-model="txForm.categoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <template x-for="c in categories.filter(cat => cat.type === txForm.type)" :key="c.id">
+                                <option :value="c.id" x-text="c.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Date</label>
+                        <input type="date" x-model="txForm.date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Note / Description</label>
+                        <input type="text" x-model="txForm.note" placeholder="Optional details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg transition">Save Transaction</button>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        <!-- Add/Edit Ledger Modal -->
+        <div x-show="showLedgerModal" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-[30px] sm:rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-white" x-text="ledgerForm.id ? 'Edit Ledger' : 'Create Ledger'"></h3>
+                    <button @click="showLedgerModal = false" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <form @submit.prevent="saveLedger" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Ledger Name</label>
+                        <input type="text" x-model="ledgerForm.name" required placeholder="e.g. SBI Bank Account" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                        <select x-model="ledgerForm.type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <option value="Cash">Cash</option>
+                            <option value="Bank">Bank</option>
+                            <option value="Savings">Savings</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Fund">Fund</option>
+                            <option value="Receivable">Receivable</option>
+                            <option value="Payable">Payable</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Opening Balance (₹)</label>
+                        <input type="number" step="0.01" x-model.number="ledgerForm.openingBalance" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-bold">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Icon</label>
+                            <select x-model="ledgerForm.icon" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <option value="wallet">Wallet</option>
+                                <option value="landmark">Bank</option>
+                                <option value="shield">Savings/Shield</option>
+                                <option value="trending-up">Investment</option>
+                                <option value="briefcase">Fund</option>
+                                <option value="arrow-down-left">Receivable</option>
+                                <option value="arrow-up-right">Payable</option>
+                                <option value="credit-card">Card</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Color Theme</label>
+                            <input type="color" x-model="ledgerForm.color" class="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg transition">Save Ledger</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Category Modal -->
+        <div x-show="showCategoryModal" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-[30px] sm:rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-white">Create Category</h3>
+                    <button @click="showCategoryModal = false" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <form @submit.prevent="saveCategory" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Category Name</label>
+                        <input type="text" x-model="categoryForm.name" required placeholder="e.g. Kirana / Grocery" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                        <select x-model="categoryForm.type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Icon</label>
+                            <select x-model="categoryForm.icon" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <option value="shopping-cart">Grocery</option>
+                                <option value="shopping-bag">Shopping</option>
+                                <option value="utensils">Restaurant</option>
+                                <option value="film">Entertainment</option>
+                                <option value="zap">Utilities</option>
+                                <option value="home">Rent</option>
+                                <option value="activity">Healthcare</option>
+                                <option value="briefcase">Salary</option>
+                                <option value="trending-up">Investment</option>
+                                <option value="tag">General Tag</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Color Theme</label>
+                            <input type="color" x-model="categoryForm.color" class="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg transition">Save Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Budget Modal -->
+        <div x-show="showBudgetModal" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-[30px] sm:rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-white">Set Monthly Budget</h3>
+                    <button @click="showBudgetModal = false" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <form @submit.prevent="saveBudget" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                        <select x-model="budgetForm.categoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <template x-for="c in categories.filter(x => x.type === 'Expense')" :key="c.id">
+                                <option :value="c.id" x-text="c.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Monthly Limit (₹)</label>
+                        <input type="number" step="0.01" x-model.number="budgetForm.amount" required placeholder="10000.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-bold">
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg transition">Save Budget</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div x-show="showSettings" x-transition class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-white">AKASH Settings</h3>
+                    <button @click="showSettings = false" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <p class="text-xs text-slate-400">Data is automatically saved in your browser's local storage.</p>
+                <div class="space-y-2 pt-2">
+                    <button @click="resetDemoData()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl text-xs transition">Reset to Indian Demo Data</button>
+                    <button @click="clearAllData()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-medium py-2.5 rounded-xl text-xs transition border border-rose-500/20">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast-msg" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 opacity-0 transition-all pointer-events-none">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toast-text">Success!</span>
-    </div>
-
+    <!-- Application Logic Script -->
     <script>
-        // Updated 4 Parent Groups
-        const DEFAULT_GROUPS = ["Assets", "Liability", "Income", "Expense"];
+        function moneyApp() {
+            return {
+                activeTab: 'dashboard',
+                currentDateFormatted: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
+                toast: { show: false, message: '' },
 
-        // Master Application State
-        let appData = {
-            categories: [
-                { id: "cat-1", name: "Groceries & Supplies", pillar: "EXPENSE", icon: "fa-basket-shopping" },
-                { id: "cat-2", name: "Salary & Wages", pillar: "INCOME", icon: "fa-briefcase" },
-                { id: "cat-3", name: "Bank Accounts", pillar: "ASSET", icon: "fa-building-columns" },
-                { id: "cat-4", name: "Credit Cards", pillar: "LIABILITY", icon: "fa-credit-card" },
-                { id: "cat-5", name: "Dining & Food", pillar: "EXPENSE", icon: "fa-utensils" },
-                { id: "cat-6", name: "Mutual Funds", pillar: "ASSET", icon: "fa-chart-line" }
-            ],
-            ledgers: [
-                { id: "leg-1", group: "Assets", customCatId: "cat-3", name: "Cash in Hand", balance: 5000, showOnDashboard: true },
-                { id: "leg-2", group: "Assets", customCatId: "cat-3", name: "SBI Savings Bank", balance: 45000, showOnDashboard: true },
-                { id: "leg-3", group: "Assets", customCatId: "cat-3", name: "HDFC Fixed Deposit", balance: 100000, showOnDashboard: true },
-                { id: "leg-4", group: "Assets", customCatId: "cat-6", name: "Zerodha Demat", balance: 65000, showOnDashboard: true },
-                { id: "leg-5", group: "Assets", customCatId: "cat-3", name: "Ramesh (Borrower)", balance: 12000, showOnDashboard: true },
-                { id: "leg-6", group: "Liability", customCatId: "cat-4", name: "ICICI Credit Card", balance: 18500, showOnDashboard: true }
-            ],
-            transactions: [
-                { id: "tx-1", type: "INCOME", amount: 75000, date: getRecentDate(2), sourceId: "leg-2", targetId: null, category: "Salary & Wages", note: "Monthly Salary Inflow" },
-                { id: "tx-2", type: "EXPENSE", amount: 4800, date: getRecentDate(1), sourceId: "leg-1", targetId: null, category: "Groceries & Supplies", note: "Weekly provisions" },
-                { id: "tx-3", type: "TRANSFER", amount: 10000, date: getRecentDate(0), sourceId: "leg-2", targetId: "leg-1", category: "ATM Withdrawal", note: "Self Cash Transfer" }
-            ],
-            budgets: [
-                { id: "b-1", category: "Groceries & Supplies", amount: 15000, dateFrom: getMonthStartDate(), dateTo: getMonthEndDate() }
-            ]
-        };
+                // Modals
+                showTxModal: false,
+                showLedgerModal: false,
+                showCategoryModal: false,
+                showBudgetModal: false,
+                showSettings: false,
 
-        let currentActivePillarTab = 'EXPENSE';
+                // Data Models
+                ledgers: [],
+                categories: [],
+                transactions: [],
+                budgets: [],
 
-        // Helper Date Functions
-        function getRecentDate(daysAgo) {
-            const d = new Date();
-            d.setDate(d.getDate() - daysAgo);
-            return d.toISOString().split('T')[0];
-        }
+                // Forms
+                txForm: { id: null, type: 'Expense', amount: '', ledgerId: '', destLedgerId: '', categoryId: '', date: new Date().toISOString().split('T')[0], note: '' },
+                ledgerForm: { id: null, name: '', type: 'Bank', openingBalance: 0, icon: 'landmark', color: '#6366f1' },
+                categoryForm: { id: null, name: '', type: 'Expense', icon: 'tag', color: '#ec4899' },
+                budgetForm: { id: null, categoryId: '', amount: '' },
 
-        function getMonthStartDate() {
-            const d = new Date();
-            return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
-        }
+                // Filters
+                txSearch: '',
+                txFilterType: 'All',
 
-        function getMonthEndDate() {
-            const d = new Date();
-            return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
-        }
-
-        // Indian Currency Formatter (₹ 1,23,456.00)
-        function formatCurr(amount) {
-            const num = Number(amount) || 0;
-            return '₹ ' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function initApp() {
-            const saved = localStorage.getItem('dhan_track_v3');
-            if (saved) {
-                try {
-                    appData = JSON.parse(saved);
-                } catch(e) {
-                    console.error("Storage error", e);
-                }
-            }
-            
-            // Migrate old group names to new 4 groups if necessary
-            appData.ledgers.forEach(l => {
-                if (l.showOnDashboard === undefined) l.showOnDashboard = true;
-                if (["Cash", "Bank", "Savings", "Investment", "Receivable"].includes(l.group)) {
-                    l.group = "Assets";
-                } else if (l.group === "Payable") {
-                    l.group = "Liability";
-                }
-            });
-
-            renderAll();
-        }
-
-        function saveData() {
-            localStorage.setItem('dhan_track_v3', JSON.stringify(appData));
-            renderAll();
-        }
-
-        function renderAll() {
-            renderDashboard();
-            renderCategoryPillarList();
-            renderTransactionsList('ALL');
-            renderBudgetList();
-            renderLedgerDirectory();
-        }
-
-        function calculateLedgerCurrentBalance(ledgerId) {
-            const ledger = appData.ledgers.find(l => l.id === ledgerId);
-            if (!ledger) return 0;
-
-            let balance = parseFloat(ledger.balance) || 0;
-
-            appData.transactions.forEach(tx => {
-                const amt = parseFloat(tx.amount) || 0;
-                if (tx.type === 'INCOME' && tx.sourceId === ledgerId) {
-                    balance += amt;
-                } else if (tx.type === 'EXPENSE' && tx.sourceId === ledgerId) {
-                    balance -= amt;
-                } else if (tx.type === 'TRANSFER') {
-                    if (tx.sourceId === ledgerId) balance -= amt;
-                    if (tx.targetId === ledgerId) balance += amt;
-                }
-            });
-
-            return balance;
-        }
-
-        function renderDashboard() {
-            const container = document.getElementById('categories-container');
-            container.innerHTML = '';
-
-            let totalAssets = 0;
-            let totalLiabilities = 0;
-
-            const groupMeta = {
-                Assets: { icon: 'fa-building-columns', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                Liability: { icon: 'fa-credit-card', color: 'text-rose-400', bg: 'bg-rose-500/10' },
-                Income: { icon: 'fa-arrow-trend-up', color: 'text-teal-400', bg: 'bg-teal-500/10' },
-                Expense: { icon: 'fa-arrow-trend-down', color: 'text-amber-400', bg: 'bg-amber-500/10' }
-            };
-
-            appData.ledgers.forEach(l => {
-                const bal = calculateLedgerCurrentBalance(l.id);
-                if (l.group === 'Liability') {
-                    totalLiabilities += bal;
-                } else if (l.group === 'Assets') {
-                    totalAssets += bal;
-                }
-            });
-
-            const dashboardLedgers = appData.ledgers.filter(l => l.showOnDashboard !== false);
-
-            dashboardLedgers.forEach(l => {
-                const bal = calculateLedgerCurrentBalance(l.id);
-                const meta = groupMeta[l.group] || { icon: 'fa-wallet', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
-
-                const singleBox = document.createElement('div');
-                singleBox.className = "bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between transition-all hover:border-slate-700 space-y-2";
-                singleBox.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div onclick="openLedgerDetailModal('${l.id}')" class="flex items-center space-x-2 cursor-pointer truncate flex-1">
-                            <div class="w-7 h-7 rounded-lg ${meta.bg} ${meta.color} flex items-center justify-center text-[11px] flex-shrink-0 shadow-inner">
-                                <i class="fa-solid ${meta.icon}"></i>
-                            </div>
-                            <div class="truncate">
-                                <div class="text-[11px] font-bold text-slate-200 truncate">${l.name}</div>
-                                <div class="text-[9px] text-slate-400 uppercase tracking-wide">${l.group}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1 opacity-70 hover:opacity-100 flex-shrink-0">
-                            <button onclick="editLedger('${l.id}')" class="w-5 h-5 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[9px]" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteLedger('${l.id}')" class="w-5 h-5 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[9px]" title="Delete">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div onclick="openLedgerDetailModal('${l.id}')" class="text-right cursor-pointer pt-1 border-t border-slate-800/60">
-                        <span class="text-xs font-extrabold ${l.group === 'Liability' ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(bal)}</span>
-                    </div>
-                `;
-                container.appendChild(singleBox);
-            });
-
-            if (dashboardLedgers.length === 0) {
-                container.innerHTML = `<div class="col-span-2 text-center py-6 text-xs text-slate-500 italic">No ledgers set to show on Dashboard. Check Ledger Directory.</div>`;
-            }
-
-            const netWorth = totalAssets - totalLiabilities;
-            document.getElementById('total-balance').textContent = formatCurr(netWorth);
-            document.getElementById('total-assets').textContent = formatCurr(totalAssets);
-            document.getElementById('total-liabilities').textContent = formatCurr(totalLiabilities);
-
-            const badge = document.getElementById('net-worth-badge');
-            if (netWorth >= 0) {
-                badge.className = "bg-emerald-500/20 text-emerald-300 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border border-emerald-500/30";
-                badge.textContent = "Positive Wealth";
-            } else {
-                badge.className = "bg-rose-500/20 text-rose-300 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border border-rose-500/30";
-                badge.textContent = "Deficit";
-            }
-
-            renderExpenseDonutChart();
-        }
-
-        function renderExpenseDonutChart() {
-            const svg = document.getElementById('expense-donut-chart');
-            const legendContainer = document.getElementById('expense-chart-legend');
-            const singleBoxesContainer = document.getElementById('single-expense-boxes');
-            const totalExpenseLabel = document.getElementById('chart-total-expense');
-            const centerText = document.getElementById('donut-center-text');
-
-            svg.innerHTML = '';
-            legendContainer.innerHTML = '';
-            singleBoxesContainer.innerHTML = '';
-
-            let expenseMap = {};
-            let totalExpense = 0;
-
-            appData.transactions.forEach(tx => {
-                if (tx.type === 'EXPENSE') {
-                    const amt = parseFloat(tx.amount) || 0;
-                    const cat = tx.category || 'General';
-                    expenseMap[cat] = (expenseMap[cat] || 0) + amt;
-                    totalExpense += amt;
-                }
-            });
-
-            totalExpenseLabel.textContent = formatCurr(totalExpense);
-            centerText.textContent = formatCurr(totalExpense).replace('.00','');
-
-            const keys = Object.keys(expenseMap);
-            if (keys.length === 0 || totalExpense === 0) {
-                svg.innerHTML = `<circle cx="18" cy="18" r="15.9155" fill="transparent" stroke="#1e293b" stroke-width="4"></circle>`;
-                legendContainer.innerHTML = `<p class="text-[11px] text-slate-500 italic text-center py-2">No expenses recorded yet.</p>`;
-                singleBoxesContainer.innerHTML = `<p class="text-[11px] text-slate-500 italic text-center py-2">No category expense items found.</p>`;
-                return;
-            }
-
-            const palette = ['#10b981', '#3b82f6', '#f43f5e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899'];
-            let cumulativePercent = 0;
-
-            keys.forEach((catName, index) => {
-                const amount = expenseMap[catName];
-                const percent = (amount / totalExpense) * 100;
-                const color = palette[index % palette.length];
-
-                const strokeDasharray = `${percent} ${100 - percent}`;
-                const strokeDashoffset = -cumulativePercent;
-
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", "18");
-                circle.setAttribute("cy", "18");
-                circle.setAttribute("r", "15.9155");
-                circle.setAttribute("fill", "transparent");
-                circle.setAttribute("stroke", color);
-                circle.setAttribute("stroke-width", "4");
-                circle.setAttribute("stroke-dasharray", strokeDasharray);
-                circle.setAttribute("stroke-dashoffset", strokeDashoffset);
-                svg.appendChild(circle);
-
-                cumulativePercent += percent;
-
-                const legendItem = document.createElement('div');
-                legendItem.className = "flex items-center justify-between text-[11px]";
-                legendItem.innerHTML = `
-                    <div class="flex items-center space-x-2 truncate">
-                        <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
-                        <span class="text-slate-300 truncate font-medium">${catName}</span>
-                    </div>
-                    <span class="font-bold text-slate-200 ml-2">${formatCurr(amount)}</span>
-                `;
-                legendContainer.appendChild(legendItem);
-
-                const singleBox = document.createElement('div');
-                singleBox.className = "p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex justify-between items-center";
-                singleBox.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
-                        <div>
-                            <div class="text-xs font-bold text-slate-200">${catName}</div>
-                            <div class="text-[10px] text-slate-400">Share: ${percent.toFixed(1)}% of total expenses</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-extrabold text-rose-400">${formatCurr(amount)}</span>
-                    </div>
-                `;
-                singleBoxesContainer.appendChild(singleBox);
-            });
-        }
-
-        function switchCategoryTab(pillar) {
-            currentActivePillarTab = pillar;
-            document.querySelectorAll('.cat-pill-btn').forEach(b => {
-                b.className = "cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-slate-400 transition-all";
-            });
-
-            const activeBtn = document.getElementById(`cat-tab-${pillar}`);
-            if (activeBtn) {
-                if (pillar === 'EXPENSE') activeBtn.className = "cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-rose-400 bg-slate-800 transition-all";
-                if (pillar === 'INCOME') activeBtn.className = "cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-emerald-400 bg-slate-800 transition-all";
-                if (pillar === 'ASSET') activeBtn.className = "cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-indigo-400 bg-slate-800 transition-all";
-                if (pillar === 'LIABILITY') activeBtn.className = "cat-pill-btn flex-1 py-1.5 rounded-lg font-bold text-amber-400 bg-slate-800 transition-all";
-            }
-
-            renderCategoryPillarList();
-        }
-
-        function renderCategoryPillarList() {
-            const container = document.getElementById('category-type-list');
-            container.innerHTML = '';
-
-            const filtered = appData.categories.filter(c => c.pillar === currentActivePillarTab);
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No categories under ${currentActivePillarTab}. Tap "+ Add Category" to create one.</div>`;
-                return;
-            }
-
-            filtered.forEach(c => {
-                const card = document.createElement('div');
-                card.className = "p-3 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center text-xs shadow-sm";
-                card.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs">
-                            <i class="fa-solid ${c.icon || 'fa-tag'}"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-slate-200 text-xs">${c.name}</div>
-                            <div class="text-[10px] text-slate-500">Pillar: ${c.pillar}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="editCategory('${c.id}')" class="w-7 h-7 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs" title="Edit Category">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteCategory('${c.id}')" class="w-7 h-7 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-xs" title="Delete Category">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function openLedgerDetailModal(ledgerId) {
-            const ledger = appData.ledgers.find(l => l.id === ledgerId);
-            if (!ledger) return;
-
-            document.getElementById('modal-ledger-title').textContent = ledger.name;
-            document.getElementById('modal-ledger-subtitle').textContent = `Group: ${ledger.group}`;
-            
-            const currentBal = calculateLedgerCurrentBalance(ledgerId);
-            document.getElementById('modal-ledger-balance').textContent = formatCurr(currentBal);
-
-            document.getElementById('btn-edit-ledger-inline').onclick = function() {
-                closeModal('modal-ledger-tx');
-                editLedger(ledgerId);
-            };
-
-            const ledgerTxList = appData.transactions.filter(t => t.sourceId === ledgerId || t.targetId === ledgerId);
-            document.getElementById('modal-ledger-tx-count').textContent = ledgerTxList.length;
-
-            const listContainer = document.getElementById('modal-ledger-tx-list');
-            listContainer.innerHTML = '';
-
-            if (ledgerTxList.length === 0) {
-                listContainer.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No transactions recorded on this ledger yet.</div>`;
-            } else {
-                ledgerTxList.sort((a,b) => new Date(b.date) - new Date(a.date));
-
-                ledgerTxList.forEach(tx => {
-                    const isSource = tx.sourceId === ledgerId;
-                    let amountColor = 'text-slate-200';
-                    let sign = '';
-
-                    if (tx.type === 'INCOME') {
-                        amountColor = 'text-emerald-400';
-                        sign = '+';
-                    } else if (tx.type === 'EXPENSE') {
-                        amountColor = 'text-rose-400';
-                        sign = '-';
-                    } else if (tx.type === 'TRANSFER') {
-                        if (isSource) {
-                            amountColor = 'text-amber-400';
-                            sign = '-';
-                        } else {
-                            amountColor = 'text-emerald-400';
-                            sign = '+';
+                initData() {
+                    const saved = localStorage.getItem('akash_money_data');
+                    if (saved) {
+                        try {
+                            const parsed = JSON.parse(saved);
+                            this.ledgers = parsed.ledgers || [];
+                            this.categories = parsed.categories || [];
+                            this.transactions = parsed.transactions || [];
+                            this.budgets = parsed.budgets || [];
+                        } catch (e) {
+                            this.loadDemoData();
                         }
+                    } else {
+                        this.loadDemoData();
                     }
+                    this.$watch('ledgers', () => this.saveToStorage());
+                    this.$watch('categories', () => this.saveToStorage());
+                    this.$watch('transactions', () => this.saveToStorage());
+                    this.$watch('budgets', () => this.saveToStorage());
+                    this.$watch('activeTab', () => {
+                        setTimeout(() => lucide.createIcons(), 50);
+                    });
+                },
 
-                    const txCard = document.createElement('div');
-                    txCard.className = "p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex justify-between items-center text-xs";
-                    txCard.innerHTML = `
-                        <div class="space-y-0.5">
-                            <div class="font-bold text-slate-200">${tx.category}</div>
-                            <div class="text-[11px] text-slate-400">${tx.note || 'No description'}</div>
-                            <div class="text-[10px] text-slate-500">${tx.date}</div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-right">
-                                <div class="font-extrabold text-sm ${amountColor}">${sign}${formatCurr(tx.amount)}</div>
-                                <span class="text-[10px] px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded">${tx.type}</span>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <button onclick="closeModal('modal-ledger-tx'); editTransaction('${tx.id}');" class="w-6 h-6 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[10px]" title="Edit">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button onclick="closeModal('modal-ledger-tx'); deleteTransaction('${tx.id}');" class="w-6 h-6 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px]" title="Delete">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    listContainer.appendChild(txCard);
-                });
-            }
+                saveToStorage() {
+                    const data = {
+                        ledgers: this.ledgers,
+                        categories: this.categories,
+                        transactions: this.transactions,
+                        budgets: this.budgets
+                    };
+                    localStorage.setItem('akash_money_data', JSON.stringify(data));
+                },
 
-            document.getElementById('modal-ledger-tx').classList.remove('hidden');
-        }
+                loadDemoData() {
+                    this.ledgers = [
+                        { id: 'l1', name: 'SBI Bank Main', type: 'Bank', openingBalance: 125000, icon: 'landmark', color: '#3b82f6' },
+                        { id: 'l2', name: 'PayTM Cash Wallet', type: 'Cash', openingBalance: 4500, icon: 'wallet', color: '#10b981' },
+                        { id: 'l3', name: 'HDFC FD Savings', type: 'Savings', openingBalance: 300000, icon: 'shield', color: '#8b5cf6' },
+                        { id: 'l4', name: 'Zerodha Mutual Fund', type: 'Investment', openingBalance: 150000, icon: 'trending-up', color: '#f59e0b' },
+                        { id: 'l5', name: 'Friend Loan Receivable', type: 'Receivable', openingBalance: 15000, icon: 'arrow-down-left', color: '#06b6d4' },
+                        { id: 'l6', name: 'ICICI Card Payable', type: 'Payable', openingBalance: -12500, icon: 'arrow-up-right', color: '#f43f5e' }
+                    ];
 
-        function renderTransactionsList(filterType = 'ALL') {
-            const list = document.getElementById('all-transactions-list');
-            list.innerHTML = '';
+                    this.categories = [
+                        { id: 'c1', name: 'Salary', type: 'Income', icon: 'briefcase', color: '#10b981' },
+                        { id: 'c2', name: 'Grocery & Kirana', type: 'Expense', icon: 'shopping-cart', color: '#f97316' },
+                        { id: 'c3', name: 'Shopping & Apparel', type: 'Expense', icon: 'shopping-bag', color: '#ec4899' },
+                        { id: 'c4', name: 'Swiggy & Dining', type: 'Expense', icon: 'utensils', color: '#ef4444' },
+                        { id: 'c5', name: 'Utilities & Electricity', type: 'Expense', icon: 'zap', color: '#3b82f6' },
+                        { id: 'c6', name: 'House Rent', type: 'Expense', icon: 'home', color: '#6366f1' },
+                        { id: 'c7', name: 'Entertainment & Movies', type: 'Expense', icon: 'film', color: '#a855f7' },
+                        { id: 'c8', name: 'Healthcare & Pharmacy', type: 'Expense', icon: 'activity', color: '#14b8a6' }
+                    ];
 
-            let filtered = appData.transactions;
-            if (filterType !== 'ALL') {
-                filtered = appData.transactions.filter(t => t.type === filterType);
-            }
+                    const today = new Date().toISOString().split('T')[0];
+                    this.transactions = [
+                        { id: 't1', type: 'Income', amount: 85000, ledgerId: 'l1', categoryId: 'c1', date: today, note: 'Monthly Salary Credit' },
+                        { id: 't2', type: 'Expense', amount: 18000, ledgerId: 'l1', categoryId: 'c6', date: today, note: 'House Rent Payment' },
+                        { id: 't3', type: 'Expense', amount: 4200, ledgerId: 'l2', categoryId: 'c2', date: today, note: 'Monthly Kirana Purchase' },
+                        { id: 't4', type: 'Expense', amount: 1250, ledgerId: 'l2', categoryId: 'c4', date: today, note: 'Swiggy Dinner Order' },
+                        { id: 't5', type: 'Expense', amount: 2800, ledgerId: 'l1', categoryId: 'c5', date: today, note: 'Electricity & Internet Bill' }
+                    ];
 
-            if (filtered.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-xs text-slate-500">No transactions recorded.</div>`;
-                return;
-            }
+                    this.budgets = [
+                        { id: 'b1', categoryId: 'c2', amount: 8000 },
+                        { id: 'b2', categoryId: 'c4', amount: 4000 },
+                        { id: 'b3', categoryId: 'c6', amount: 20000 },
+                        { id: 'b4', categoryId: 'c5', amount: 3500 }
+                    ];
+                    this.showToast('AKASH Indian demo data loaded successfully!');
+                },
 
-            filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+                resetDemoData() {
+                    this.loadDemoData();
+                    this.showSettings = false;
+                },
 
-            filtered.forEach(tx => {
-                const sourceLedger = appData.ledgers.find(l => l.id === tx.sourceId);
-                const targetLedger = appData.ledgers.find(l => l.id === tx.targetId);
+                clearAllData() {
+                    this.ledgers = [];
+                    this.categories = [];
+                    this.transactions = [];
+                    this.budgets = [];
+                    localStorage.removeItem('akash_money_data');
+                    this.showSettings = false;
+                    this.showToast('All data cleared.');
+                },
 
-                let badgeColor = 'bg-rose-500/20 text-rose-300';
-                let icon = 'fa-arrow-down-long';
-                let amountSign = '-';
+                showToast(msg) {
+                    this.toast.message = msg;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 3000);
+                },
 
-                if (tx.type === 'INCOME') {
-                    badgeColor = 'bg-emerald-500/20 text-emerald-300';
-                    icon = 'fa-arrow-up-long';
-                    amountSign = '+';
-                } else if (tx.type === 'TRANSFER') {
-                    badgeColor = 'bg-cyan-500/20 text-cyan-300';
-                    icon = 'fa-right-left';
-                    amountSign = '↔';
-                }
+                formatCurrency(val) {
+                    const num = Number(val || 0);
+                    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                },
 
-                let accountInfo = sourceLedger ? sourceLedger.name : 'Unknown';
-                if (tx.type === 'TRANSFER') {
-                    accountInfo = `${sourceLedger ? sourceLedger.name : '?'} → ${targetLedger ? targetLedger.name : '?'}`;
-                }
+                getSubtitle() {
+                    if (this.activeTab === 'dashboard') return 'Financial overview & analytics';
+                    if (this.activeTab === 'transactions') return 'All income, expenses & transfers';
+                    if (this.activeTab === 'ledgers') return 'Accounts & balances';
+                    if (this.activeTab === 'categories') return 'Income & expense categorization';
+                    if (this.activeTab === 'budgets') return 'Monthly spending limits';
+                    return '';
+                },
 
-                const card = document.createElement('div');
-                card.className = "p-3 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center text-xs shadow-sm";
-                card.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-lg ${badgeColor} flex items-center justify-center text-xs">
-                            <i class="fa-solid ${icon}"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-slate-200 text-xs">${tx.category}</div>
-                            <div class="text-[11px] text-slate-400">${accountInfo} ${tx.note ? '• ' + tx.note : ''}</div>
-                            <div class="text-[10px] text-slate-500">${tx.date}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="text-right">
-                            <div class="font-extrabold text-sm ${tx.type === 'INCOME' ? 'text-emerald-400' : tx.type === 'EXPENSE' ? 'text-rose-400' : 'text-cyan-300'}">
-                                ${amountSign}${formatCurr(tx.amount)}
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <button onclick="editTransaction('${tx.id}')" class="w-6 h-6 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[10px]" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteTransaction('${tx.id}')" class="w-6 h-6 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px]" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
+                // Ledger calculation
+                getLedgerBalance(ledgerId) {
+                    const ledger = this.ledgers.find(l => l.id === ledgerId);
+                    if (!ledger) return 0;
+                    let bal = Number(ledger.openingBalance);
 
-        function filterTx(type) {
-            document.querySelectorAll('.tx-filter-btn').forEach(btn => {
-                btn.className = "tx-filter-btn bg-slate-900 text-slate-300 text-xs px-3 py-1.5 rounded-full font-medium border border-slate-800";
-            });
-            event.target.className = "tx-filter-btn bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-sm";
-            renderTransactionsList(type);
-        }
-
-        function renderBudgetList() {
-            const container = document.getElementById('budget-list-container');
-            container.innerHTML = '';
-
-            if (appData.budgets.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-xs text-slate-500">No active budgets. Tap "+ Create Budget" to track date-filtered limits.</div>`;
-                return;
-            }
-
-            appData.budgets.forEach(b => {
-                let spentAmount = 0;
-
-                appData.transactions.forEach(tx => {
-                    if (tx.type === 'EXPENSE') {
-                        if (tx.date >= b.dateFrom && tx.date <= b.dateTo) {
-                            if (b.category.toLowerCase().trim() === 'all' || tx.category.toLowerCase().trim() === b.category.toLowerCase().trim()) {
-                                spentAmount += parseFloat(tx.amount) || 0;
-                            }
+                    this.transactions.forEach(t => {
+                        if (t.type === 'Income' && t.ledgerId === ledgerId) {
+                            bal += Number(t.amount);
+                        } else if (t.type === 'Expense' && t.ledgerId === ledgerId) {
+                            bal -= Number(t.amount);
+                        } else if (t.type === 'Transfer') {
+                            if (t.ledgerId === ledgerId) bal -= Number(t.amount);
+                            if (t.destLedgerId === ledgerId) bal += Number(t.amount);
                         }
+                    });
+                    return bal;
+                },
+
+                calculateNetWorth() {
+                    let total = 0;
+                    this.ledgers.forEach(l => {
+                        total += this.getLedgerBalance(l.id);
+                    });
+                    return total;
+                },
+
+                get currentMonthIncome() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.transactions
+                        .filter(t => t.type === 'Income' && t.date.startsWith(currentMonth))
+                        .reduce((sum, t) => sum + Number(t.amount), 0);
+                },
+
+                get currentMonthExpense() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.transactions
+                        .filter(t => t.type === 'Expense' && t.date.startsWith(currentMonth))
+                        .reduce((sum, t) => sum + Number(t.amount), 0);
+                },
+
+                // Dynamic SVG Doughnut Chart Calculation
+                get expenseChartData() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    const monthExpenses = this.transactions.filter(t => t.type === 'Expense' && t.date.startsWith(currentMonth));
+                    const totalExpense = monthExpenses.reduce((acc, t) => acc + Number(t.amount), 0);
+
+                    if (totalExpense === 0) return [];
+
+                    const categoryTotals = {};
+                    monthExpenses.forEach(t => {
+                        categoryTotals[t.categoryId] = (categoryTotals[t.categoryId] || 0) + Number(t.amount);
+                    });
+
+                    let accumulatedPercent = 0;
+                    return Object.keys(categoryTotals).map(catId => {
+                        const amount = categoryTotals[catId];
+                        const cat = this.categories.find(c => c.id === catId);
+                        const percent = ((amount / totalExpense) * 100);
+                        const strokeDasharray = `${percent} ${100 - percent}`;
+                        const strokeDashoffset = -accumulatedPercent;
+                        accumulatedPercent += percent;
+
+                        return {
+                            id: catId,
+                            name: cat ? cat.name : 'Other',
+                            color: cat ? (cat.color || '#6366f1') : '#94a3b8',
+                            amount: amount,
+                            percent: percent.toFixed(1),
+                            strokeDasharray: strokeDasharray,
+                            strokeDashoffset: strokeDashoffset
+                        };
+                    }).sort((a, b) => b.amount - a.amount);
+                },
+
+                getLedgerName(id) {
+                    const l = this.ledgers.find(x => x.id === id);
+                    return l ? l.name : 'Unknown Account';
+                },
+
+                getCategoryName(id) {
+                    const c = this.categories.find(x => x.id === id);
+                    return c ? c.name : 'General';
+                },
+
+                getTransactionIcon(tx) {
+                    if (tx.type === 'Transfer') return 'arrow-left-right';
+                    const cat = this.categories.find(c => c.id === tx.categoryId);
+                    if (cat && cat.icon) return cat.icon;
+                    return tx.type === 'Income' ? 'arrow-down-left' : 'arrow-up-right';
+                },
+
+                getTransactionTitle(tx) {
+                    if (tx.type === 'Transfer') {
+                        return 'Transfer: ' + this.getLedgerName(tx.ledgerId) + ' → ' + this.getLedgerName(tx.destLedgerId);
                     }
-                });
+                    return this.getCategoryName(tx.categoryId);
+                },
 
-                const allocated = parseFloat(b.amount);
-                const remaining = allocated - spentAmount;
-                const percentage = Math.min(Math.round((spentAmount / allocated) * 100), 100);
-                const isOverBudget = spentAmount > allocated;
+                get filteredTransactions() {
+                    return this.transactions.filter(t => {
+                        const matchesType = this.txFilterType === 'All' || t.type === this.txFilterType;
+                        const title = this.getTransactionTitle(t).toLowerCase();
+                        const note = (t.note || '').toLowerCase();
+                        const query = this.txSearch.toLowerCase();
+                        const matchesSearch = title.includes(query) || note.includes(query);
+                        return matchesType && matchesSearch;
+                    });
+                },
 
-                let progressColor = 'bg-emerald-500';
-                if (percentage > 80) progressColor = 'bg-amber-500';
-                if (isOverBudget) progressColor = 'bg-rose-500';
+                getSpentForCategory(catId) {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.transactions
+                        .filter(t => t.type === 'Expense' && t.categoryId === catId && t.date.startsWith(currentMonth))
+                        .reduce((sum, t) => sum + Number(t.amount), 0);
+                },
 
-                const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-md";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-white text-sm">${b.category}</h3>
-                            <div class="text-[11px] text-emerald-400 font-medium mt-0.5">
-                                <i class="fa-regular fa-calendar-days mr-1"></i>${b.dateFrom} to ${b.dateTo}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[11px] px-2 py-0.5 rounded-md font-semibold ${isOverBudget ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
-                                ${isOverBudget ? 'Over Budget' : 'On Track'}
-                            </span>
-                            <div class="flex gap-1">
-                                <button onclick="editBudget('${b.id}')" class="w-6 h-6 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[10px]" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteBudget('${b.id}')" class="w-6 h-6 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px]" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
+                getBudgetColorClass(spent, limit) {
+                    const ratio = spent / limit;
+                    if (ratio >= 1) return 'bg-rose-500';
+                    if (ratio >= 0.75) return 'bg-amber-500';
+                    return 'bg-emerald-500';
+                },
 
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs font-semibold">
-                            <span class="text-slate-300">Spent: ${formatCurr(spentAmount)}</span>
-                            <span class="text-slate-400">Target: ${formatCurr(allocated)}</span>
-                        </div>
-                        <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden">
-                            <div class="h-full ${progressColor} transition-all duration-300" style="width: ${percentage}%"></div>
-                        </div>
-                    </div>
+                // Actions & Modals
+                openAddTransaction() {
+                    if (this.ledgers.length === 0) {
+                        this.showToast('Please create at least one ledger first.');
+                        this.activeTab = 'ledgers';
+                        return;
+                    }
+                    if (this.categories.length === 0) {
+                        this.showToast('Please create at least one category first.');
+                        this.activeTab = 'categories';
+                        return;
+                    }
+                    this.txForm = {
+                        id: null,
+                        type: 'Expense',
+                        amount: '',
+                        ledgerId: this.ledgers[0].id,
+                        destLedgerId: this.ledgers.length > 1 ? this.ledgers[1].id : '',
+                        categoryId: this.categories.filter(c => c.type === 'Expense')[0]?.id || this.categories[0].id,
+                        date: new Date().toISOString().split('T')[0],
+                        note: ''
+                    };
+                    this.showTxModal = true;
+                    setTimeout(() => lucide.createIcons(), 50);
+                },
 
-                    <div class="flex justify-between items-center pt-1 border-t border-slate-800 text-xs">
-                        <span class="text-slate-400">Remaining Limit:</span>
-                        <span class="font-bold ${remaining < 0 ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(remaining)}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
+                saveTransaction() {
+                    if (this.txForm.type === 'Transfer' && this.txForm.ledgerId === this.txForm.destLedgerId) {
+                        this.showToast('Source and destination ledgers must be different.');
+                        return;
+                    }
+                    const newTx = {
+                        id: 't_' + Date.now(),
+                        type: this.txForm.type,
+                        amount: Number(this.txForm.amount),
+                        ledgerId: this.txForm.ledgerId,
+                        destLedgerId: this.txForm.type === 'Transfer' ? this.txForm.destLedgerId : null,
+                        categoryId: this.txForm.type === 'Transfer' ? null : this.txForm.categoryId,
+                        date: this.txForm.date,
+                        note: this.txForm.note
+                    };
+                    this.transactions.unshift(newTx);
+                    this.showTxModal = false;
+                    this.showToast('Transaction recorded successfully!');
+                },
 
-        function renderLedgerDirectory() {
-            const list = document.getElementById('ledger-directory-list');
-            list.innerHTML = '';
+                deleteTransaction(id) {
+                    this.transactions = this.transactions.filter(t => t.id !== id);
+                    this.showToast('Transaction deleted.');
+                },
 
-            appData.ledgers.forEach(l => {
-                const bal = calculateLedgerCurrentBalance(l.id);
-                const customCat = appData.categories.find(c => c.id === l.customCatId);
+                openAddLedgerModal() {
+                    this.ledgerForm = { id: null, name: '', type: 'Bank', openingBalance: 0, icon: 'landmark', color: '#6366f1' };
+                    this.showLedgerModal = true;
+                },
 
-                const card = document.createElement('div');
-                card.className = "p-3 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center text-xs";
-                card.innerHTML = `
-                    <div class="space-y-0.5">
-                        <div onclick="openLedgerDetailModal('${l.id}')" class="font-bold text-slate-200 cursor-pointer hover:text-emerald-300">${l.name}</div>
-                        <div class="text-[11px] text-emerald-400 font-medium">Group: ${l.group} ${customCat ? '• Tag: ' + customCat.name : ''}</div>
-                        <div class="text-[10px] text-slate-400">${l.showOnDashboard !== false ? '✓ Visible on Dashboard' : '✗ Hidden from Dashboard'}</div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="text-right">
-                            <div class="font-bold text-sm ${bal < 0 ? 'text-rose-400' : 'text-emerald-400'}">${formatCurr(bal)}</div>
-                        </div>
-                        <div class="flex gap-1">
-                            <button onclick="editLedger('${l.id}')" class="w-6 h-6 rounded bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-[10px]" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteLedger('${l.id}')" class="w-6 h-6 rounded bg-slate-800 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px]" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
+                editLedger(ledger) {
+                    this.ledgerForm = { ...ledger };
+                    this.showLedgerModal = true;
+                },
 
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
+                saveLedger() {
+                    if (this.ledgerForm.id) {
+                        const index = this.ledgers.findIndex(l => l.id === this.ledgerForm.id);
+                        if (index !== -1) {
+                            this.ledgers[index] = { ...this.ledgerForm };
+                        }
+                    } else {
+                        const newLedger = {
+                            ...this.ledgerForm,
+                            id: 'l_' + Date.now()
+                        };
+                        this.ledgers.push(newLedger);
+                    }
+                    this.showLedgerModal = false;
+                    this.showToast('Ledger saved successfully!');
+                },
 
-        // Category Modal Handlers
-        function openCategoryModal() {
-            document.getElementById('edit-cat-id').value = '';
-            document.getElementById('category-modal-heading').innerHTML = '<i class="fa-solid fa-tags text-indigo-400 mr-2"></i>Add Custom Category';
-            document.getElementById('form-add-category').reset();
-            document.getElementById('modal-add-category').classList.remove('hidden');
-        }
+                deleteLedger(id) {
+                    if (this.ledgers.length <= 1) {
+                        this.showToast('You must keep at least one ledger.');
+                        return;
+                    }
+                    this.ledgers = this.ledgers.filter(l => l.id !== id);
+                    this.showToast('Ledger deleted.');
+                },
 
-        function editCategory(id) {
-            const cat = appData.categories.find(c => c.id === id);
-            if (!cat) return;
+                openAddCategoryModal() {
+                    this.categoryForm = { id: null, name: '', type: 'Expense', icon: 'shopping-bag', color: '#ec4899' };
+                    this.showCategoryModal = true;
+                },
 
-            document.getElementById('edit-cat-id').value = cat.id;
-            document.getElementById('cat-pillar').value = cat.pillar;
-            document.getElementById('cat-name').value = cat.name;
-            document.getElementById('cat-icon').value = cat.icon || 'fa-tag';
-            document.getElementById('category-modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i>Edit Category';
-            document.getElementById('modal-add-category').classList.remove('hidden');
-        }
+                saveCategory() {
+                    const newCat = {
+                        ...this.categoryForm,
+                        id: 'c_' + Date.now()
+                    };
+                    this.categories.push(newCat);
+                    this.showCategoryModal = false;
+                    this.showToast('Category created!');
+                },
 
-        function deleteCategory(id) {
-            if (confirm("Are you sure you want to delete this custom category?")) {
-                appData.categories = appData.categories.filter(c => c.id !== id);
-                saveData();
-                showToast("Category deleted!");
-            }
-        }
+                deleteCategory(id) {
+                    this.categories = this.categories.filter(c => c.id !== id);
+                    this.showToast('Category deleted.');
+                },
 
-        function handleSaveCategory(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-cat-id').value;
-            const pillar = document.getElementById('cat-pillar').value;
-            const name = document.getElementById('cat-name').value.trim();
-            const icon = document.getElementById('cat-icon').value.trim() || 'fa-tag';
+                openAddBudgetModal() {
+                    const availableCats = this.categories.filter(c => c.type === 'Expense');
+                    if (availableCats.length === 0) {
+                        this.showToast('Please create expense categories first.');
+                        return;
+                    }
+                    this.budgetForm = { id: null, categoryId: availableCats[0].id, amount: '' };
+                    this.showBudgetModal = true;
+                },
 
-            if (!name) return;
+                saveBudget() {
+                    const newBudget = {
+                        ...this.budgetForm,
+                        id: 'b_' + Date.now(),
+                        amount: Number(this.budgetForm.amount)
+                    };
+                    this.budgets.push(newBudget);
+                    this.showBudgetModal = false;
+                    this.showToast('Budget set successfully!');
+                },
 
-            if (editId) {
-                const cat = appData.categories.find(c => c.id === editId);
-                if (cat) {
-                    cat.pillar = pillar;
-                    cat.name = name;
-                    cat.icon = icon;
+                deleteBudget(id) {
+                    this.budgets = this.budgets.filter(b => b.id !== id);
+                    this.showToast('Budget removed.');
                 }
-                showToast("Category updated!");
-            } else {
-                appData.categories.push({
-                    id: 'cat-' + Date.now(),
-                    pillar: pillar,
-                    name: name,
-                    icon: icon
-                });
-                showToast("Category created!");
-            }
-
-            saveData();
-            closeModal('modal-add-category');
-        }
-
-        // Ledger Modal Handlers
-        function populateCustomCatDropdown() {
-            const select = document.getElementById('new-ledger-custom-cat');
-            select.innerHTML = '<option value="">None (Unlinked)</option>';
-            appData.categories.forEach(c => {
-                const opt = new Option(`${c.name} (${c.pillar})`, c.id);
-                select.add(opt);
-            });
-        }
-
-        function openLedgerModal() {
-            populateCustomCatDropdown();
-            document.getElementById('edit-ledger-id').value = '';
-            document.getElementById('new-ledger-show-dash').checked = true;
-            document.getElementById('ledger-modal-heading').innerHTML = '<i class="fa-solid fa-folder-plus text-emerald-400 mr-2"></i>Create New Ledger';
-            document.getElementById('form-add-ledger').reset();
-            document.getElementById('modal-add-ledger').classList.remove('hidden');
-        }
-
-        function editLedger(id) {
-            const ledger = appData.ledgers.find(l => l.id === id);
-            if (!ledger) return;
-
-            populateCustomCatDropdown();
-            document.getElementById('edit-ledger-id').value = ledger.id;
-            document.getElementById('new-ledger-group').value = ledger.group;
-            document.getElementById('new-ledger-custom-cat').value = ledger.customCatId || '';
-            document.getElementById('new-ledger-name').value = ledger.name;
-            document.getElementById('new-ledger-balance').value = ledger.balance;
-            document.getElementById('new-ledger-show-dash').checked = ledger.showOnDashboard !== false;
-            document.getElementById('ledger-modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-400 mr-2"></i>Edit Ledger';
-            document.getElementById('modal-add-ledger').classList.remove('hidden');
-        }
-
-        function deleteLedger(id) {
-            if (confirm("Are you sure you want to delete this ledger? Balance calculations will update.")) {
-                appData.ledgers = appData.ledgers.filter(l => l.id !== id);
-                saveData();
-                showToast("Ledger deleted!");
             }
         }
-
-        function handleSaveLedger(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-ledger-id').value;
-            const group = document.getElementById('new-ledger-group').value;
-            const customCatId = document.getElementById('new-ledger-custom-cat').value;
-            const name = document.getElementById('new-ledger-name').value.trim();
-            const balance = parseFloat(document.getElementById('new-ledger-balance').value) || 0;
-            const showOnDashboard = document.getElementById('new-ledger-show-dash').checked;
-
-            if (!name) return;
-
-            if (editId) {
-                const ledger = appData.ledgers.find(l => l.id === editId);
-                if (ledger) {
-                    ledger.group = group;
-                    ledger.customCatId = customCatId || null;
-                    ledger.name = name;
-                    ledger.balance = balance;
-                    ledger.showOnDashboard = showOnDashboard;
-                }
-                showToast("Ledger updated!");
-            } else {
-                appData.ledgers.push({
-                    id: 'leg-' + Date.now(),
-                    group: group,
-                    customCatId: customCatId || null,
-                    name: name,
-                    balance: balance,
-                    showOnDashboard: showOnDashboard
-                });
-                showToast("Ledger created!");
-            }
-
-            saveData();
-            closeModal('modal-add-ledger');
-        }
-
-        // Transaction Modal Handlers
-        function populateTxSelects() {
-            const sourceSelect = document.getElementById('tx-source');
-            const targetSelect = document.getElementById('tx-target');
-            const catSelect = document.getElementById('tx-category');
-
-            sourceSelect.innerHTML = '';
-            targetSelect.innerHTML = '';
-            catSelect.innerHTML = '';
-
-            appData.ledgers.forEach(l => {
-                sourceSelect.add(new Option(`${l.name} (${l.group})`, l.id));
-                targetSelect.add(new Option(`${l.name} (${l.group})`, l.id));
-            });
-
-            if (appData.categories.length === 0) {
-                catSelect.add(new Option("General", "General"));
-            } else {
-                appData.categories.forEach(c => {
-                    catSelect.add(new Option(`${c.name} [${c.pillar}]`, c.name));
-                });
-            }
-        }
-
-        function openTxModal() {
-            populateTxSelects();
-            document.getElementById('edit-tx-id').value = '';
-            document.getElementById('tx-modal-heading').innerHTML = '<i class="fa-solid fa-receipt text-emerald-400 mr-2"></i>Add New Transaction';
-            document.getElementById('form-add-tx').reset();
-            document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-            toggleTxTypeFields();
-            document.getElementById('modal-add-tx').classList.remove('hidden');
-        }
-
-        function editTransaction(id) {
-            const tx = appData.transactions.find(t => t.id === id);
-            if (!tx) return;
-
-            populateTxSelects();
-            document.getElementById('edit-tx-id').value = tx.id;
-            document.getElementById('tx-type').value = tx.type;
-            document.getElementById('tx-amount').value = tx.amount;
-            document.getElementById('tx-date').value = tx.date;
-            document.getElementById('tx-source').value = tx.sourceId;
-            if (tx.targetId) document.getElementById('tx-target').value = tx.targetId;
-            document.getElementById('tx-category').value = tx.category;
-            document.getElementById('tx-note').value = tx.note || '';
-
-            toggleTxTypeFields();
-            document.getElementById('tx-modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-400 mr-2"></i>Edit Transaction';
-            document.getElementById('modal-add-tx').classList.remove('hidden');
-        }
-
-        function deleteTransaction(id) {
-            if (confirm("Are you sure you want to delete this transaction?")) {
-                appData.transactions = appData.transactions.filter(t => t.id !== id);
-                saveData();
-                showToast("Transaction removed!");
-            }
-        }
-
-        function handleSaveTransaction(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-tx-id').value;
-            const type = document.getElementById('tx-type').value;
-            const amount = parseFloat(document.getElementById('tx-amount').value);
-            const date = document.getElementById('tx-date').value;
-            const sourceId = document.getElementById('tx-source').value;
-            const targetId = document.getElementById('tx-target').value;
-            const category = document.getElementById('tx-category').value;
-            const note = document.getElementById('tx-note').value.trim();
-
-            if (!amount || amount <= 0 || !sourceId || !date) return;
-
-            if (type === 'TRANSFER' && sourceId === targetId) {
-                alert("Source and Target ledgers cannot be identical!");
-                return;
-            }
-
-            if (editId) {
-                const tx = appData.transactions.find(t => t.id === editId);
-                if (tx) {
-                    tx.type = type;
-                    tx.amount = amount;
-                    tx.date = date;
-                    tx.sourceId = sourceId;
-                    tx.targetId = type === 'TRANSFER' ? targetId : null;
-                    tx.category = category;
-                    tx.note = note;
-                }
-                showToast("Transaction updated!");
-            } else {
-                appData.transactions.push({
-                    id: 'tx-' + Date.now(),
-                    type: type,
-                    amount: amount,
-                    date: date,
-                    sourceId: sourceId,
-                    targetId: type === 'TRANSFER' ? targetId : null,
-                    category: category,
-                    note: note
-                });
-                showToast("Transaction recorded!");
-            }
-
-            saveData();
-            closeModal('modal-add-tx');
-        }
-
-        // Budget Modal Handlers
-        function populateBudgetCategorySelect() {
-            const select = document.getElementById('budget-category');
-            select.innerHTML = '<option value="All">All Expense Categories</option>';
-            const expCategories = appData.categories.filter(c => c.pillar === 'EXPENSE');
-            expCategories.forEach(c => {
-                select.add(new Option(c.name, c.name));
-            });
-        }
-
-        function openBudgetModal() {
-            populateBudgetCategorySelect();
-            document.getElementById('edit-budget-id').value = '';
-            document.getElementById('budget-modal-heading').innerHTML = '<i class="fa-solid fa-bullseye text-emerald-400 mr-2"></i>New Budget Goal';
-            document.getElementById('form-add-budget').reset();
-            document.getElementById('budget-date-from').value = getMonthStartDate();
-            document.getElementById('budget-date-to').value = getMonthEndDate();
-            document.getElementById('modal-add-budget').classList.remove('hidden');
-        }
-
-        function editBudget(id) {
-            const b = appData.budgets.find(item => item.id === id);
-            if (!b) return;
-
-            populateBudgetCategorySelect();
-            document.getElementById('edit-budget-id').value = b.id;
-            document.getElementById('budget-category').value = b.category;
-            document.getElementById('budget-amount').value = b.amount;
-            document.getElementById('budget-date-from').value = b.dateFrom;
-            document.getElementById('budget-date-to').value = b.dateTo;
-            document.getElementById('budget-modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-400 mr-2"></i>Edit Budget';
-            document.getElementById('modal-add-budget').classList.remove('hidden');
-        }
-
-        function deleteBudget(id) {
-            if (confirm("Delete this budget limit?")) {
-                appData.budgets = appData.budgets.filter(b => b.id !== id);
-                saveData();
-                showToast("Budget deleted!");
-            }
-        }
-
-        function handleSaveBudget(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-budget-id').value;
-            const category = document.getElementById('budget-category').value;
-            const amount = parseFloat(document.getElementById('budget-amount').value);
-            const dateFrom = document.getElementById('budget-date-from').value;
-            const dateTo = document.getElementById('budget-date-to').value;
-
-            if (!category || !amount || !dateFrom || !dateTo) return;
-
-            if (editId) {
-                const b = appData.budgets.find(item => item.id === editId);
-                if (b) {
-                    b.category = category;
-                    b.amount = amount;
-                    b.dateFrom = dateFrom;
-                    b.dateTo = dateTo;
-                }
-                showToast("Budget updated!");
-            } else {
-                appData.budgets.push({
-                    id: 'b-' + Date.now(),
-                    category: category,
-                    amount: amount,
-                    dateFrom: dateFrom,
-                    dateTo: dateTo
-                });
-                showToast("Budget saved!");
-            }
-
-            saveData();
-            closeModal('modal-add-budget');
-        }
-
-        function toggleTxTypeFields() {
-            const type = document.getElementById('tx-type').value;
-            const targetField = document.getElementById('field-target-ledger');
-            const lblSource = document.getElementById('lbl-source-ledger');
-
-            if (type === 'TRANSFER') {
-                targetField.classList.remove('hidden');
-                lblSource.textContent = "From Account / Ledger";
-            } else {
-                targetField.classList.add('hidden');
-                lblSource.textContent = "Source Account / Ledger";
-            }
-        }
-
-        function switchTab(tabName) {
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-categories').classList.add('hidden');
-            document.getElementById('view-transactions').classList.add('hidden');
-            document.getElementById('view-budget').classList.add('hidden');
-            document.getElementById('view-ledgers').classList.add('hidden');
-
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.className = "nav-item text-slate-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all";
-            });
-
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            document.getElementById(`nav-${tabName}`).className = "nav-item text-emerald-400 flex flex-col items-center py-1 px-2 rounded-xl transition-all";
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast-msg');
-            document.getElementById('toast-text').textContent = message;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 2500);
-        }
-
-        window.onload = function() {
-            initApp();
-        };
     </script>
 </body>
 </html>
